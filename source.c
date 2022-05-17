@@ -12,16 +12,17 @@ static char* command = NULL;
 static char* background = NULL;
 static char* style = NULL;
 
+static gboolean should_daemonize = FALSE;
 static gboolean no_layer_shell = FALSE;
 static gboolean no_input_inhibit = FALSE;
 
-static GOptionEntry entries[] =
-{
-	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL},
-	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL},
-	{ "background", 'b', 0, G_OPTION_ARG_STRING, &background, "Background image to use", NULL},
+static GOptionEntry entries[] = {
+	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
+	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL },
+	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL },
+	{ "background", 'b', 0, G_OPTION_ARG_STRING, &background, "Background image to use", NULL },
 	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style, "CSS style to use", NULL },
-	{ NULL }
+	{ NULL },
 };
 
 static void reload_outputs() {
@@ -93,7 +94,7 @@ static void attach_custom_style(const char* path) {
 
 	gtk_css_provider_load_from_path(provider, path, &err);
 	if(err != NULL) {
-		g_warning("style loading failed: %s", err->message);
+		g_warning("Style loading failed: %s", err->message);
 		g_error_free(err);
 	} else
 		gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
@@ -101,15 +102,36 @@ static void attach_custom_style(const char* path) {
 	g_object_unref(provider);
 }
 
+static void daemonize(void) {
+	pid_t pid = fork();
+	if(pid == -1) {
+		g_print("Failed to daemonize!\n");
+		exit(1);
+	} else if(pid != 0) exit(0);
+	if(setsid() == -1) exit(1);
+	pid = fork();
+	if(pid == -1) exit(1);
+	else if(pid != 0) exit(0);
+}
+
 int main(int argc, char **argv) {
 	GError *error = NULL;
 	GOptionContext *option_context = g_option_context_new("- GTK-based lockscreen for sway");
 	g_option_context_add_main_entries(option_context, entries, NULL);
+	g_option_context_set_help_enabled(option_context, FALSE);
+	g_option_context_set_ignore_unknown_options(option_context, TRUE);
+	g_option_context_parse(option_context, &argc, &argv, &error);
+
+	if(should_daemonize) daemonize();
+
 	g_option_context_add_group(option_context, gtk_get_option_group(TRUE));
+	g_option_context_set_help_enabled(option_context, TRUE);
+	g_option_context_set_ignore_unknown_options(option_context, FALSE);
 	if(!g_option_context_parse(option_context, &argc, &argv, &error)) {
-		g_print("option parsing failed: %s\n", error->message);
+		g_print("Option parsing failed: %s\n", error->message);
 		exit(1);
 	}
+
 
 	gtklock = create_gtklock();
 	gtklock->use_layer_shell = !no_layer_shell;
@@ -118,7 +140,7 @@ int main(int argc, char **argv) {
 	if(background != NULL) {
 		gtklock->background = gdk_pixbuf_new_from_file(background, &error);
 		if(gtklock->background == NULL)
-			g_print("background loading failed: %s\n", error->message);
+			g_print("Background loading failed: %s\n", error->message);
 	}
 
 	if(style != NULL) attach_custom_style(style);
