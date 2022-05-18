@@ -12,6 +12,7 @@
 #include "auth.h"
 
 static void window_set_focus(struct Window *win, struct Window *old);
+static void window_pwcheck(GtkWidget *widget, gpointer data);
 
 static void window_set_focus_layer_shell(struct Window *win, struct Window *old) {
 	if(old != NULL) gtk_layer_set_keyboard_interactivity(GTK_WINDOW(old->window), FALSE);
@@ -63,16 +64,7 @@ static void window_empty(struct Window *ctx) {
 	ctx->input_field = NULL;
 }
 
-// TODO: error message
-static void window_pwcheck(GtkWidget *widget, gpointer data) {
-	struct Window *ctx = data;
-
-	if(!auth_pwcheck(gtk_entry_get_text((GtkEntry*)ctx->input_field), gtklock->auth_handle)) return;
-	if(gtklock->use_input_inhibit) input_inhibitor_destroy();
-	g_application_quit(G_APPLICATION(gtklock->app));
-}
-
-static void window_setup_input(struct Window *ctx) {
+static void window_setup_input(struct Window *ctx, gboolean failed) {
 		if(ctx->input_box != NULL) {
 			gtk_widget_destroy(ctx->input_box);
 			ctx->input_box = NULL;
@@ -100,6 +92,13 @@ static void window_setup_input(struct Window *ctx) {
 		gtk_widget_set_halign(button_box, GTK_ALIGN_END);
 		gtk_container_add(GTK_CONTAINER(ctx->input_box), button_box);
 
+		if(failed) {
+			GtkWidget *error = gtk_label_new("Login failed");
+			gtk_label_set_markup((GtkLabel*)error, "<span color=\"red\">Login failed</span>");
+			gtk_widget_set_halign(error, GTK_ALIGN_END);
+			gtk_container_add(GTK_CONTAINER(button_box), error);
+		}
+
 		GtkWidget *unlock_button = gtk_button_new_with_label("Unlock");
 		GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(unlock_button);
 		g_signal_connect(unlock_button, "clicked", G_CALLBACK(window_pwcheck), ctx);
@@ -110,6 +109,19 @@ static void window_setup_input(struct Window *ctx) {
 		gtk_widget_show_all(ctx->window);
 
 		if(ctx->input_field != NULL) gtk_widget_grab_focus(ctx->input_field);
+}
+
+static void window_pwcheck(GtkWidget *widget, gpointer data) {
+	struct Window *ctx = data;
+
+	gboolean ret = auth_pwcheck(gtk_entry_get_text((GtkEntry*)ctx->input_field), gtklock->auth_handle);
+	if(ret == FALSE) {
+		window_setup_input(ctx, TRUE);
+		return;
+	}
+
+	if(gtklock->use_input_inhibit) input_inhibitor_destroy();
+	g_application_quit(G_APPLICATION(gtklock->app));
 }
 
 static void window_setup(struct Window *ctx) {
@@ -149,7 +161,7 @@ static void window_setup(struct Window *ctx) {
 			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->body);
 			window_update_clock(ctx);
 		}
-		window_setup_input(ctx);
+		window_setup_input(ctx, FALSE);
 	} else if(ctx->body != NULL) {
 		gtk_widget_destroy(ctx->body);
 		ctx->body = NULL;
