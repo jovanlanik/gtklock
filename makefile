@@ -6,9 +6,11 @@
 NAME := gtklock
 PREFIX ?= /usr/local
 
+INSTALL ?= install
+
 LIBS := pam gtk+-3.0 gtk-layer-shell-0 wayland-client
 CFLAGS += -std=c11 $(shell pkg-config --cflags $(LIBS))
-LDFLAGS += $(shell pkg-config --libs $(LIBS))
+LDLIBS += $(shell pkg-config --libs $(LIBS))
 
 SRC = $(wildcard *.c) 
 OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o $(SRC:%.c=%.o)
@@ -18,17 +20,24 @@ TRASH = $(OBJ) $(NAME) $(wildcard *-client-protocol.h) $(wildcard *-client-proto
 .PHONY: all clean install uninstall
 
 all: $(NAME)
+
 clean:
 	@rm $(TRASH) | true
+
 install:
-	install $(NAME) $(DESTDIR)$(PREFIX)/bin/$(NAME)
-	install -m 644 $(NAME).pam $(DESTDIR)/etc/pam.d/$(NAME)
+	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
+	$(INSTALL) -d $(DESTDIR)/etc/pam.d
+	$(INSTALL) $(NAME) $(DESTDIR)$(PREFIX)/bin/$(NAME)
+	$(INSTALL) -m644 $(NAME).pam $(DESTDIR)/etc/pam.d/$(NAME)
+
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(NAME)
 	rm -f $(DESTDIR)/etc/pam.d/$(NAME)
+
 $(NAME): wlr-input-inhibitor-unstable-v1-client-protocol.h $(OBJ)
-	$(CC) $(LDFLAGS) $(OBJ) -o $@
+
 %-client-protocol.c: %.xml
 	wayland-scanner private-code $< $@
+
 %-client-protocol.h: %.xml
 	wayland-scanner client-header $< $@
