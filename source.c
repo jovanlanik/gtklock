@@ -5,6 +5,7 @@
 
 #include "window.h"
 #include "gtklock.h"
+#include "auth.h"
 
 struct GtkLock *gtklock = NULL;
 
@@ -104,10 +105,9 @@ static void attach_custom_style(const char* path) {
 
 static void daemonize(void) {
 	pid_t pid = fork();
-	if(pid == -1) {
-		g_print("Failed to daemonize!\n");
-		exit(1);
-	} else if(pid != 0) exit(0);
+	if(pid == -1) g_error("Failed to daemonize!\n");
+	else if(pid != 0) exit(0);
+
 	if(setsid() == -1) exit(1);
 	pid = fork();
 	if(pid == -1) exit(1);
@@ -127,11 +127,8 @@ int main(int argc, char **argv) {
 	g_option_context_add_group(option_context, gtk_get_option_group(TRUE));
 	g_option_context_set_help_enabled(option_context, TRUE);
 	g_option_context_set_ignore_unknown_options(option_context, FALSE);
-	if(!g_option_context_parse(option_context, &argc, &argv, &error)) {
-		g_print("Option parsing failed: %s\n", error->message);
-		exit(1);
-	}
-
+	if(!g_option_context_parse(option_context, &argc, &argv, &error))
+		g_error("Option parsing failed: %s\n", error->message);
 
 	gtklock = create_gtklock();
 	gtklock->use_layer_shell = !no_layer_shell;
@@ -139,17 +136,16 @@ int main(int argc, char **argv) {
 
 	if(background != NULL) {
 		gtklock->background = gdk_pixbuf_new_from_file(background, &error);
-		if(gtklock->background == NULL)
-			g_print("Background loading failed: %s\n", error->message);
+		if(gtklock->background == NULL) g_warning("Background loading failed: %s\n", error->message);
 	}
 
 	if(style != NULL) attach_custom_style(style);
 
+	auth_start();
+
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
-
 	gtklock_destroy(gtklock);
-
 	return status;
 }

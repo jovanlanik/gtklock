@@ -8,6 +8,8 @@
 
 #include "window.h"
 #include "gtklock.h"
+#include "input-inhibitor.h"
+#include "auth.h"
 
 static void window_set_focus(struct Window *win, struct Window *old);
 
@@ -80,7 +82,7 @@ static void window_setup_input(struct Window *ctx) {
 		ctx->input_field = gtk_entry_new();
 		gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
 		gtk_entry_set_visibility((GtkEntry*)ctx->input_field, FALSE);
-		//g_signal_connect(ctx->input_field, "activate", G_CALLBACK(action_answer_question), ctx);
+		g_signal_connect(ctx->input_field, "activate", G_CALLBACK(auth_check), ctx);
 		gtk_widget_set_size_request(ctx->input_field, 384, -1);
 		gtk_widget_set_halign(ctx->input_field, GTK_ALIGN_END);
 		gtk_container_add(GTK_CONTAINER(question_box), ctx->input_field);
@@ -91,7 +93,7 @@ static void window_setup_input(struct Window *ctx) {
 
 		GtkWidget *unlock_button = gtk_button_new_with_label("Unlock");
 		GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(unlock_button);
-		//g_signal_connect(unlock_button, "clicked", G_CALLBACK(action_answer_question), ctx);
+		g_signal_connect(unlock_button, "clicked", G_CALLBACK(auth_check), ctx);
 		gtk_style_context_add_class(unlock_button_style, "suggested-action");
 		gtk_widget_set_halign(unlock_button, GTK_ALIGN_END);
 		gtk_container_add(GTK_CONTAINER(button_box), unlock_button);
@@ -218,5 +220,6 @@ struct Window *create_window(GdkMonitor *monitor) {
 		gtk_widget_set_app_paintable(w->window, TRUE);
 		g_signal_connect(w->window, "draw", G_CALLBACK(window_background), NULL);
 	}
+	if(gtklock->use_input_inhibit) input_inhibitor_get();
 	return w;
 }

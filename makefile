@@ -5,7 +5,7 @@
 
 NAME := gtklock
 
-LIBS := gtk+-3.0 gtk-layer-shell-0 wayland-client
+LIBS := pam gtk+-3.0 gtk-layer-shell-0 wayland-client
 CFLAGS += -std=c11 $(shell pkg-config --cflags $(LIBS))
 LDFLAGS += $(shell pkg-config --libs $(LIBS))
 

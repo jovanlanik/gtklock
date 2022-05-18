@@ -74,7 +74,7 @@ static void gtk_wayland_init_if_needed(void) {
 	wl_display_roundtrip(wl_display);
 
 	if(!input_inhibit_manager_global)
-		g_warning("It appears your Wayland compositor does not support wlr-input-inhibitor");
+		g_warning("Your Wayland compositor does not support wlr-input-inhibitor");
 
 	has_initialized = TRUE;
 }
