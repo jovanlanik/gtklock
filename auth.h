@@ -3,7 +3,8 @@
 
 // PAM Authentication
 
-#include <gtk/gtk.h>
+#include <glib.h>
 
-void auth_start(void);
-void auth_check(GtkWidget *widget, gpointer data);
+void *auth_start(void);
+void auth_end(void *handle);
+gboolean auth_pwcheck(const char *s, void *handle);

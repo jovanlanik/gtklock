@@ -5,7 +5,6 @@
 
 #include "window.h"
 #include "gtklock.h"
-#include "auth.h"
 
 struct GtkLock *gtklock = NULL;
 
@@ -141,10 +140,7 @@ int main(int argc, char **argv) {
 
 	if(style != NULL) attach_custom_style(style);
 
-	auth_start();
-
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
-
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
 	gtklock_destroy(gtklock);
 	return status;

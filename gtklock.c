@@ -4,6 +4,7 @@
 
 #include "window.h"
 #include "gtklock.h"
+#include "auth.h"
 
 struct Window* gtklock_window_by_widget(struct GtkLock *gtklock, GtkWidget *window) {
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
@@ -64,6 +65,7 @@ struct GtkLock* create_gtklock() {
 	gtklock = calloc(1, sizeof(struct GtkLock));
 	gtklock->app = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
 	gtklock->windows = g_array_new(FALSE, TRUE, sizeof(struct Window*));
+	gtklock->auth_handle = auth_start();
 	return gtklock;
 }
 
@@ -86,6 +88,7 @@ void gtklock_destroy(struct GtkLock *gtklock) {
 		gtklock->draw_clock_source = 0;
 	}
 
+	auth_end(gtklock->auth_handle);
 	free(gtklock);
 }
 

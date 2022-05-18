@@ -5,15 +5,14 @@
 
 #define _POSIX_C_SOURCE 200809L
 
+#include <unistd.h>
 #include <pwd.h>
 #include <security/pam_appl.h>
 
-#include "window.h"
-#include "gtklock.h"
-#include "input-inhibitor.h"
+#include "auth.h"
 
+static int pam_status;
 static char *password;
-static pam_handle_t *handle = NULL;
 
 static int conversation(
 	int num_msg,
@@ -36,30 +35,32 @@ static int conversation(
 	return PAM_SUCCESS;
 }
 
-void auth_start(void) {
+void *auth_start(void) {
+	pam_handle_t *handle = NULL;
 	struct passwd *pw = getpwuid(getuid());
 	if(pw == NULL) g_error("getpwuid() failed");
 	char *username = pw->pw_name;
 
 	const struct pam_conv conv = { conversation, NULL };
-	int ret = pam_start("gtklock", username, &conv, &handle);
-	if(ret != PAM_SUCCESS) g_error("pam_start() failed");
+	pam_status = pam_start("gtklock", username, &conv, &handle);
+	if(pam_status != PAM_SUCCESS) g_error("pam_start() failed");
+	return handle;
 }
 
-void auth_check(GtkWidget *widget, gpointer data) {
-	struct Window *ctx = data;
-	password = strdup(gtk_entry_get_text((GtkEntry*)ctx->input_field));
+void auth_end(void *handle) {
+	if(pam_end(handle, pam_status) != PAM_SUCCESS)
+		g_warning("pam_end() failed");
+}
 
-	int ret = pam_authenticate(handle, 0);
-	// TODO: error message
-	if(ret != PAM_SUCCESS) {
-		g_print("Authentication failure!\n");
-		return;
+gboolean auth_pwcheck(const char *s, void *handle) {
+	password = strdup(s);
+	if(password == NULL) {
+		g_warning("Failed allocation");
+		return FALSE;
 	}
-
-	input_inhibitor_destroy();
-	ret = pam_setcred(handle, PAM_REFRESH_CRED);
-	if(pam_end(handle, ret) != PAM_SUCCESS) g_warning("pam_end() failed");
-	exit(0);
+	pam_status = pam_authenticate((pam_handle_t *)handle, 0);
+	if(pam_status != PAM_SUCCESS) return FALSE;
+	pam_status = pam_setcred((pam_handle_t *)handle, PAM_REFRESH_CRED);
+	return TRUE;
 }
 

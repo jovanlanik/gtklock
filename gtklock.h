@@ -18,6 +18,8 @@ struct GtkLock {
     gboolean use_input_inhibit;
     char *error;
     char time[8];
+
+    void *auth_handle;
 };
 
 extern struct GtkLock *gtklock;
