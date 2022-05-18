@@ -6,9 +6,14 @@ GTK-based lockscreen for Wayland.
 gtklock is based on gtkgreet written by Kenny Levinsen.
 It uses the wlr-layer-shell and wlr-input-inhibitor Wayland protocols.
 ## Usage
-`$ gtklock -h`
-## Building
-`$ make`
+- Lock screen: `$ gtklock`
+- Lock screen and daemonize: `$ gtklock -d`
+- Show help options: `$ gtklock -h`
+## Building and Installing
+```
+$ make
+$ make install
+```
 ## Dependencies
 - gtk+3.0
 - gtk-layer-shell
