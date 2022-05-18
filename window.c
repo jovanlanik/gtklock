@@ -8,7 +8,6 @@
 
 #include "window.h"
 #include "gtklock.h"
-#include "input-inhibitor.h"
 #include "auth.h"
 
 static void window_set_focus(struct Window *win, struct Window *old);
@@ -119,8 +118,6 @@ static void window_pwcheck(GtkWidget *widget, gpointer data) {
 		window_setup_input(ctx, TRUE);
 		return;
 	}
-
-	if(gtklock->use_input_inhibit) input_inhibitor_destroy();
 	g_application_quit(G_APPLICATION(gtklock->app));
 }
 
@@ -241,6 +238,5 @@ struct Window *create_window(GdkMonitor *monitor) {
 		gtk_widget_set_app_paintable(w->window, TRUE);
 		g_signal_connect(w->window, "draw", G_CALLBACK(window_background), NULL);
 	}
-	if(gtklock->use_input_inhibit) input_inhibitor_get();
 	return w;
 }

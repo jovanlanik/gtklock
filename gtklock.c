@@ -4,6 +4,7 @@
 
 #include "window.h"
 #include "gtklock.h"
+#include "input-inhibitor.h"
 #include "auth.h"
 
 struct Window* gtklock_window_by_widget(struct GtkLock *gtklock, GtkWidget *window) {
@@ -72,6 +73,7 @@ struct GtkLock* create_gtklock() {
 void gtklock_activate(struct GtkLock *gtklock) {
 	gtklock->draw_clock_source = g_timeout_add_seconds(5, gtklock_update_clocks_handler, gtklock);
 	gtklock_update_clocks(gtklock);
+	if(gtklock->use_input_inhibit) input_inhibitor_get();
 }
 
 void gtklock_destroy(struct GtkLock *gtklock) {
@@ -88,6 +90,7 @@ void gtklock_destroy(struct GtkLock *gtklock) {
 		gtklock->draw_clock_source = 0;
 	}
 
+	if(gtklock->use_input_inhibit) input_inhibitor_destroy();
 	auth_end(gtklock->auth_handle);
 	free(gtklock);
 }
