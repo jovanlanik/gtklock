@@ -33,9 +33,9 @@ static void window_setup_layershell(struct Window *ctx) {
 	ctx->enter_notify_handler = g_signal_connect(ctx->window, "enter-notify-event", G_CALLBACK(window_enter_notify), NULL);
 
 	gtk_layer_init_for_window(GTK_WINDOW(ctx->window));
-	gtk_layer_set_layer(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_LAYER_TOP);
+	gtk_layer_set_layer(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_LAYER_OVERLAY);
 	gtk_layer_set_monitor(GTK_WINDOW(ctx->window), ctx->monitor);
-	gtk_layer_auto_exclusive_zone_enable(GTK_WINDOW(ctx->window));
+	gtk_layer_set_exclusive_zone(GTK_WINDOW(ctx->window), -1);
 	gtk_layer_set_anchor(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_EDGE_LEFT, TRUE);
 	gtk_layer_set_anchor(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_EDGE_RIGHT, TRUE);
 	gtk_layer_set_anchor(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_EDGE_TOP, TRUE);
