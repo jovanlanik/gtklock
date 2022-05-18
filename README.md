@@ -11,3 +11,4 @@ It uses the wlr-layer-shell and wlr-input-inhibitor Wayland protocols.
 - gtk+3.0
 - gtk-layer-shell
 - wayland-client
+- PAM
