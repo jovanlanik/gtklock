@@ -8,8 +8,6 @@
 
 struct GtkLock *gtklock = NULL;
 
-static char* command = NULL;
-static char* background = NULL;
 static char* style = NULL;
 
 static gboolean should_daemonize = FALSE;
@@ -20,7 +18,6 @@ static GOptionEntry entries[] = {
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
 	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL },
 	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL },
-	{ "background", 'b', 0, G_OPTION_ARG_STRING, &background, "Background image to use", NULL },
 	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style, "CSS style to use", NULL },
 	{ NULL },
 };
@@ -132,11 +129,6 @@ int main(int argc, char **argv) {
 	gtklock = create_gtklock();
 	gtklock->use_layer_shell = !no_layer_shell;
 	gtklock->use_input_inhibit = !no_input_inhibit;
-
-	if(background != NULL) {
-		gtklock->background = gdk_pixbuf_new_from_file(background, &error);
-		if(gtklock->background == NULL) g_warning("Background loading failed: %s\n", error->message);
-	}
 
 	if(style != NULL) attach_custom_style(style);
 

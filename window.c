@@ -213,13 +213,6 @@ void window_configure(struct Window *w) {
 	gtk_widget_show_all(w->window);
 }
 
-
-static gboolean window_background(GtkWidget *widget, cairo_t *cr, gpointer data) {
-	gdk_cairo_set_source_pixbuf(cr, gtklock->background, 0, 0);
-	cairo_paint(cr);
-	return FALSE;
-}
-
 struct Window *create_window(GdkMonitor *monitor) {
 	struct Window *w = calloc(1, sizeof(struct Window));
 	if(w == NULL) {
@@ -234,9 +227,5 @@ struct Window *create_window(GdkMonitor *monitor) {
 	gtk_window_set_title(GTK_WINDOW(w->window), "Lockscreen");
 	gtk_window_set_default_size(GTK_WINDOW(w->window), 200, 200);
 
-	if(gtklock->background != NULL) {
-		gtk_widget_set_app_paintable(w->window, TRUE);
-		g_signal_connect(w->window, "draw", G_CALLBACK(window_background), NULL);
-	}
 	return w;
 }
