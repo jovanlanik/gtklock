@@ -11,7 +11,6 @@
 #include "auth.h"
 
 static void window_set_focus(struct Window *win, struct Window *old);
-static void window_pwcheck(GtkWidget *widget, gpointer data);
 
 static void window_set_focus_layer_shell(struct Window *win, struct Window *old) {
 	if(old != NULL) gtk_layer_set_keyboard_interactivity(GTK_WINDOW(old->window), FALSE);
@@ -61,9 +60,40 @@ static void window_empty(struct Window *ctx) {
 	ctx->body = NULL;
 	ctx->input_box = NULL;
 	ctx->input_field = NULL;
+	ctx->unlock_button = NULL;
+	ctx->error_label = NULL;
 }
 
-static void window_setup_input(struct Window *ctx, gboolean failed) {
+static gboolean window_pwerror(gpointer data) {
+	struct Window *ctx = data;
+
+	gtk_widget_set_sensitive(ctx->unlock_button, TRUE);
+	gtk_widget_set_sensitive(ctx->input_field, TRUE);
+	gtk_entry_set_text(GTK_ENTRY(ctx->input_field), "");
+	gtk_widget_grab_focus(ctx->input_field);
+
+	gtk_label_set_markup(GTK_LABEL(ctx->error_label), "<span color=\"red\">Login failed</span>");
+
+	return G_SOURCE_REMOVE;
+}
+
+static gpointer window_pwwait(gpointer data) {
+	struct Window *ctx = data;
+	gboolean ret = auth_pwcheck(gtk_entry_get_text((GtkEntry*)ctx->input_field), gtklock->auth_handle);
+	if(ret != FALSE) g_application_quit(G_APPLICATION(gtklock->app));
+	g_main_context_invoke(NULL, window_pwerror, ctx);
+	return NULL;
+}
+
+static void window_pwcheck(GtkWidget *widget, gpointer data) {
+	struct Window *ctx = data;
+	gtk_widget_set_sensitive(ctx->input_field, FALSE);
+	gtk_widget_set_sensitive(ctx->unlock_button, FALSE);
+	gtk_label_set_text(GTK_LABEL(ctx->error_label), NULL);
+	g_thread_new(NULL, window_pwwait, ctx);
+}
+
+static void window_setup_input(struct Window *ctx) {
 		if(ctx->input_box != NULL) {
 			gtk_widget_destroy(ctx->input_box);
 			ctx->input_box = NULL;
@@ -91,34 +121,18 @@ static void window_setup_input(struct Window *ctx, gboolean failed) {
 		gtk_widget_set_halign(button_box, GTK_ALIGN_END);
 		gtk_container_add(GTK_CONTAINER(ctx->input_box), button_box);
 
-		if(failed) {
-			GtkWidget *error = gtk_label_new("Login failed");
-			gtk_label_set_markup((GtkLabel*)error, "<span color=\"red\">Login failed</span>");
-			gtk_widget_set_halign(error, GTK_ALIGN_END);
-			gtk_container_add(GTK_CONTAINER(button_box), error);
-		}
+		ctx->error_label = gtk_label_new(NULL);
+		gtk_widget_set_halign(ctx->error_label, GTK_ALIGN_END);
+		gtk_container_add(GTK_CONTAINER(button_box), ctx->error_label);
 
-		GtkWidget *unlock_button = gtk_button_new_with_label("Unlock");
-		GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(unlock_button);
-		g_signal_connect(unlock_button, "clicked", G_CALLBACK(window_pwcheck), ctx);
+		ctx->unlock_button = gtk_button_new_with_label("Unlock");
+		GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(ctx->unlock_button);
+		g_signal_connect(ctx->unlock_button, "clicked", G_CALLBACK(window_pwcheck), ctx);
 		gtk_style_context_add_class(unlock_button_style, "suggested-action");
-		gtk_widget_set_halign(unlock_button, GTK_ALIGN_END);
-		gtk_container_add(GTK_CONTAINER(button_box), unlock_button);
-
-		gtk_widget_show_all(ctx->window);
+		gtk_widget_set_halign(ctx->unlock_button, GTK_ALIGN_END);
+		gtk_container_add(GTK_CONTAINER(button_box), ctx->unlock_button);
 
 		if(ctx->input_field != NULL) gtk_widget_grab_focus(ctx->input_field);
-}
-
-static void window_pwcheck(GtkWidget *widget, gpointer data) {
-	struct Window *ctx = data;
-
-	gboolean ret = auth_pwcheck(gtk_entry_get_text((GtkEntry*)ctx->input_field), gtklock->auth_handle);
-	if(ret == FALSE) {
-		window_setup_input(ctx, TRUE);
-		return;
-	}
-	g_application_quit(G_APPLICATION(gtklock->app));
 }
 
 static void window_setup(struct Window *ctx) {
@@ -158,12 +172,14 @@ static void window_setup(struct Window *ctx) {
 			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->body);
 			window_update_clock(ctx);
 		}
-		window_setup_input(ctx, FALSE);
+		window_setup_input(ctx);
 	} else if(ctx->body != NULL) {
 		gtk_widget_destroy(ctx->body);
 		ctx->body = NULL;
 		ctx->input_box = NULL;
 		ctx->input_field = NULL;
+		ctx->unlock_button = NULL;
+		ctx->error_label = NULL;
 		window_update_clock(ctx);
 	}
 
