@@ -8,7 +8,7 @@ It uses the wlr-layer-shell and wlr-input-inhibitor Wayland protocols.
 ## Usage
 - Lock screen: `$ gtklock`
 - Lock screen and daemonize: `$ gtklock -d`
-- Example style with background: `$ gtklock -s ./example-style.css`
+- Example style with background: `$ gtklock -s ./assets/example-style.css`
 - Show help options: `$ gtklock -h`
 ## Building and Installing
 ```

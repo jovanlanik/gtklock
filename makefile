@@ -9,13 +9,13 @@ PREFIX ?= /usr/local
 INSTALL ?= install
 
 LIBS := pam gtk+-3.0 gtk-layer-shell-0 wayland-client
-CFLAGS += -std=c11 $(shell pkg-config --cflags $(LIBS))
+CFLAGS += -std=c11 -Iinclude -I $(shell pkg-config --cflags $(LIBS))
 LDLIBS += $(shell pkg-config --libs $(LIBS))
 
 SRC = $(wildcard *.c) 
 OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o $(SRC:%.c=%.o)
 
-TRASH = $(OBJ) $(NAME) $(wildcard *-client-protocol.h) $(wildcard *-client-protocol.c)
+TRASH = $(OBJ) $(NAME) $(wildcard *-client-protocol.c) $(wildcard include/*-client-protocol.h)
 
 .PHONY: all clean install uninstall
 
@@ -28,16 +28,16 @@ install:
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
 	$(INSTALL) -d $(DESTDIR)/etc/pam.d
 	$(INSTALL) $(NAME) $(DESTDIR)$(PREFIX)/bin/$(NAME)
-	$(INSTALL) -m644 $(NAME).pam $(DESTDIR)/etc/pam.d/$(NAME)
+	$(INSTALL) -m644 pam/$(NAME) $(DESTDIR)/etc/pam.d/$(NAME)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(NAME)
 	rm -f $(DESTDIR)/etc/pam.d/$(NAME)
 
-$(NAME): wlr-input-inhibitor-unstable-v1-client-protocol.h $(OBJ)
+$(NAME): include/wlr-input-inhibitor-unstable-v1-client-protocol.h $(OBJ)
 
-%-client-protocol.c: %.xml
+%-client-protocol.c: wayland/%.xml
 	wayland-scanner private-code $< $@
 
-%-client-protocol.h: %.xml
+include/%-client-protocol.h: wayland/%.xml
 	wayland-scanner client-header $< $@
