@@ -171,8 +171,8 @@ static void window_setup(struct Window *ctx) {
 			gtk_widget_set_size_request(ctx->body, 384, -1);
 			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->body);
 			window_update_clock(ctx);
+			window_setup_input(ctx);
 		}
-		window_setup_input(ctx);
 	} else if(ctx->body != NULL) {
 		gtk_widget_destroy(ctx->body);
 		ctx->body = NULL;
