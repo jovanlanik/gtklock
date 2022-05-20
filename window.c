@@ -93,6 +93,14 @@ static void window_pwcheck(GtkWidget *widget, gpointer data) {
 	g_thread_new(NULL, window_pwwait, ctx);
 }
 
+static void toggle_pw_visibility(GtkEntry* entry, GtkEntryIconPosition icon_pos) {
+	if (icon_pos != GTK_ENTRY_ICON_SECONDARY) return;
+	gboolean state = !gtk_entry_get_visibility(entry);
+	char *icon = state ? "view-reveal-symbolic" : "view-conceal-symbolic";
+	gtk_entry_set_icon_from_icon_name(entry, GTK_ENTRY_ICON_SECONDARY, icon);
+	gtk_entry_set_visibility(entry, state);
+}
+
 static void window_setup_input(struct Window *ctx) {
 		if(ctx->input_box != NULL) {
 			gtk_widget_destroy(ctx->input_box);
@@ -112,6 +120,11 @@ static void window_setup_input(struct Window *ctx) {
 		ctx->input_field = gtk_entry_new();
 		gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
 		gtk_entry_set_visibility((GtkEntry*)ctx->input_field, FALSE);
+		gtk_entry_set_placeholder_text((GtkEntry*)ctx->input_field, "Password");
+		gtk_entry_set_icon_from_icon_name((GtkEntry*)ctx->input_field,
+				GTK_ENTRY_ICON_SECONDARY,
+				"view-conceal-symbolic");
+		g_signal_connect(ctx->input_field, "icon-release", G_CALLBACK(toggle_pw_visibility), NULL);
 		g_signal_connect(ctx->input_field, "activate", G_CALLBACK(window_pwcheck), ctx);
 		gtk_widget_set_size_request(ctx->input_field, 384, -1);
 		gtk_widget_set_halign(ctx->input_field, GTK_ALIGN_END);
