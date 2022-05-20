@@ -1,5 +1,8 @@
 #define _POSIX_C_SOURCE 200809L
 
+#include <cairo.h>
+#include <math.h>
+
 #include <time.h>
 #include <assert.h>
 
@@ -47,6 +50,31 @@ void window_update_clock(struct Window *ctx) {
 	if(gtklock->focused_window == NULL || ctx == gtklock->focused_window) size = 32000;
 	g_snprintf(time, 48, "<span size='%d'>%s</span>", size, gtklock->time);
 	gtk_label_set_markup((GtkLabel*)ctx->clock_label, time);
+}
+
+void set_user_image(struct Window *ctx) {
+	const int size = 96;
+	const int h_size = size / 2;
+	// TODO: Make this configurable? Maybe just check libaccountsservice?
+	const char *path = "/var/lib/AccountsService/icons/erikreider";
+
+	GError *error = NULL;
+	GdkPixbuf *pixbuf= gdk_pixbuf_new_from_file_at_size(path, size, size, &error);
+	if (!pixbuf) {
+		fprintf(stderr, "User image error: %s\n", error->message);
+		gtk_container_remove(GTK_CONTAINER(ctx->window_box), ctx->user_icon);
+		return;
+	}
+
+	cairo_surface_t* surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size, size);
+	cairo_t *cr = cairo_create(surface);
+	gdk_cairo_set_source_pixbuf(cr, pixbuf, 0, 0);
+
+	cairo_arc(cr, h_size, h_size, h_size, 0, 2 * G_PI);
+	cairo_clip(cr);
+	cairo_paint(cr);
+
+	gtk_image_set_from_surface((GtkImage*)ctx->user_icon, surface);
 }
 
 static void window_empty(struct Window *ctx) {
@@ -160,6 +188,12 @@ static void window_setup(struct Window *ctx) {
 		g_object_set(ctx->clock_label, "margin-bottom", 10, NULL);
 		gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->clock_label);
 		window_update_clock(ctx);
+
+		ctx->user_icon = gtk_image_new();
+		gtk_widget_set_name(ctx->user_icon, "user-image");
+		g_object_set(ctx->user_icon, "margin-bottom", 10, NULL);
+		gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->user_icon);
+		set_user_image(ctx);
 	}
 
 	// Update input area if necessary

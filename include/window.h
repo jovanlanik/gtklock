@@ -10,6 +10,7 @@ struct Window {
     GtkWidget *revealer;
     GtkWidget *window_box;
     GtkWidget *body;
+    GtkWidget *user_icon;
     GtkWidget *input_box;
     GtkWidget *input_field;
     GtkWidget *unlock_button;
