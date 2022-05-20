@@ -11,6 +11,7 @@ struct Window {
     GtkWidget *window_box;
     GtkWidget *body;
     GtkWidget *user_icon;
+    GtkWidget *user_name;
     GtkWidget *input_box;
     GtkWidget *input_field;
     GtkWidget *unlock_button;

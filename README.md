@@ -25,3 +25,4 @@ $ make install
 - gtk-layer-shell
 - wayland-client
 - PAM
+- accountsservice

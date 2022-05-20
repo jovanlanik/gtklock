@@ -6,6 +6,10 @@
 #include <time.h>
 #include <assert.h>
 
+#include <act/act.h>
+#include "act/act-user-manager.h"
+#include "act/act-user.h"
+
 #include <gtk/gtk.h>
 #include <gtk-layer-shell.h>
 
@@ -52,11 +56,23 @@ void window_update_clock(struct Window *ctx) {
 	gtk_label_set_markup((GtkLabel*)ctx->clock_label, time);
 }
 
-void set_user_image(struct Window *ctx) {
+void set_user_data(ActUser* user, struct Window *ctx) {
+	const char *name = act_user_get_real_name(user);
+	if(!name) {
+		fprintf(stderr, "User name not found! \n");
+		gtk_container_remove(GTK_CONTAINER(ctx->window_box), ctx->user_name);
+	} else {
+		gtk_label_set_text((GtkLabel *)ctx->user_name, name);
+	}
+
+	const char *path = act_user_get_icon_file(user);
+	if(!path) {
+		fprintf(stderr, "User image not found! \n");
+		gtk_container_remove(GTK_CONTAINER(ctx->window_box), ctx->user_icon);
+		return;
+	}
 	const int size = 96;
 	const int h_size = size / 2;
-	// TODO: Make this configurable? Maybe just check libaccountsservice?
-	const char *path = "/var/lib/AccountsService/icons/erikreider";
 
 	GError *error = NULL;
 	GdkPixbuf *pixbuf= gdk_pixbuf_new_from_file_at_size(path, size, size, &error);
@@ -70,11 +86,23 @@ void set_user_image(struct Window *ctx) {
 	cairo_t *cr = cairo_create(surface);
 	gdk_cairo_set_source_pixbuf(cr, pixbuf, 0, 0);
 
+	// Makes the image circular
 	cairo_arc(cr, h_size, h_size, h_size, 0, 2 * G_PI);
 	cairo_clip(cr);
 	cairo_paint(cr);
 
 	gtk_image_set_from_surface((GtkImage*)ctx->user_icon, surface);
+}
+
+void user_loaded(ActUser* user, GParamSpec *spec, struct Window *ctx) {
+	gboolean loaded = FALSE;
+	g_object_get(user, "is-loaded", &loaded, NULL);
+	if (!loaded) {
+		gtk_container_remove(GTK_CONTAINER(ctx->window_box), ctx->user_icon);
+		gtk_container_remove(GTK_CONTAINER(ctx->window_box), ctx->user_name);
+		return;
+	}
+	set_user_data(user, ctx);
 }
 
 static void window_empty(struct Window *ctx) {
@@ -189,11 +217,31 @@ static void window_setup(struct Window *ctx) {
 		gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->clock_label);
 		window_update_clock(ctx);
 
-		ctx->user_icon = gtk_image_new();
-		gtk_widget_set_name(ctx->user_icon, "user-image");
-		g_object_set(ctx->user_icon, "margin-bottom", 10, NULL);
-		gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->user_icon);
-		set_user_image(ctx);
+		if (gtklock->show_user_info) {
+			// Profile picture
+			ctx->user_icon = gtk_image_new();
+			gtk_widget_set_name(ctx->user_icon, "user-image");
+			g_object_set(ctx->user_icon, "margin-bottom", 10, NULL);
+			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->user_icon);
+
+			// Profile name
+			ctx->user_name = gtk_label_new(NULL);
+			gtk_widget_set_name(ctx->user_name, "user-name");
+			g_object_set(ctx->user_name, "margin-bottom", 10, NULL);
+			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->user_name);
+
+			ActUserManager* manager = act_user_manager_get_default();
+			if (act_user_manager_no_service(manager)) {
+				fprintf(stderr, "AccountsService is not running!\n");
+				gtk_container_remove(GTK_CONTAINER(ctx->window_box), ctx->user_icon);
+				gtk_container_remove(GTK_CONTAINER(ctx->window_box), ctx->user_name);
+			} else {
+				const char *username = g_get_user_name();
+				ActUser *user = act_user_manager_get_user(manager, username);
+				g_signal_connect(user, "notify::is-loaded", G_CALLBACK(user_loaded), ctx);
+				g_signal_connect(user, "changed", G_CALLBACK(set_user_data), ctx);
+			}
+		}
 	}
 
 	// Update input area if necessary

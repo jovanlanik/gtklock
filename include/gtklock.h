@@ -15,6 +15,7 @@ struct GtkLock {
 
     gboolean use_layer_shell;
     gboolean use_input_inhibit;
+	gboolean show_user_info;
     char *error;
     char time[8];
 

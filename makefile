@@ -8,7 +8,7 @@ PREFIX ?= /usr/local
 
 INSTALL ?= install
 
-LIBS := pam gtk+-3.0 gtk-layer-shell-0 wayland-client
+LIBS := pam gtk+-3.0 gtk-layer-shell-0 wayland-client accountsservice
 CFLAGS += -std=c11 -lm -Iinclude -I $(shell pkg-config --cflags $(LIBS))
 LDLIBS += $(shell pkg-config --libs $(LIBS))
 
