@@ -77,7 +77,7 @@ static gboolean window_pwerror(gpointer data) {
 	return G_SOURCE_REMOVE;
 }
 
-static gpointer window_pwwait(gpointer data) {
+static gpointer window_pw_wait(gpointer data) {
 	struct Window *ctx = data;
 	gboolean ret = auth_pwcheck(gtk_entry_get_text((GtkEntry*)ctx->input_field), gtklock->auth_handle);
 	if(ret != FALSE) g_application_quit(G_APPLICATION(gtklock->app));
@@ -85,20 +85,24 @@ static gpointer window_pwwait(gpointer data) {
 	return NULL;
 }
 
-static void window_pwcheck(GtkWidget *widget, gpointer data) {
+static void window_pw_check(GtkWidget *widget, gpointer data) {
 	struct Window *ctx = data;
 	gtk_widget_set_sensitive(ctx->input_field, FALSE);
 	gtk_widget_set_sensitive(ctx->unlock_button, FALSE);
 	gtk_label_set_text(GTK_LABEL(ctx->error_label), NULL);
-	g_thread_new(NULL, window_pwwait, ctx);
+	g_thread_new(NULL, window_pw_wait, ctx);
 }
 
-static void toggle_pw_visibility(GtkEntry* entry, GtkEntryIconPosition icon_pos) {
-	if (icon_pos != GTK_ENTRY_ICON_SECONDARY) return;
-	gboolean state = !gtk_entry_get_visibility(entry);
-	char *icon = state ? "view-conceal-symbolic" : "view-reveal-symbolic";
+static void window_pw_set_vis(GtkEntry* entry, gboolean visibility) {
+	const char *icon = visibility ? "view-conceal-symbolic" : "view-reveal-symbolic";
 	gtk_entry_set_icon_from_icon_name(entry, GTK_ENTRY_ICON_SECONDARY, icon);
-	gtk_entry_set_visibility(entry, state);
+	gtk_entry_set_visibility(entry, visibility);
+}
+
+static void window_pw_toggle_vis(GtkEntry* entry, GtkEntryIconPosition icon_pos) {
+	if(icon_pos != GTK_ENTRY_ICON_SECONDARY) return;
+	gboolean visibility = gtk_entry_get_visibility(entry);
+	window_pw_set_vis(entry, !visibility);
 }
 
 static void window_setup_input(struct Window *ctx) {
@@ -119,12 +123,9 @@ static void window_setup_input(struct Window *ctx) {
 
 		ctx->input_field = gtk_entry_new();
 		gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
-		gtk_entry_set_visibility((GtkEntry*)ctx->input_field, FALSE);
-		gtk_entry_set_icon_from_icon_name((GtkEntry*)ctx->input_field,
-				GTK_ENTRY_ICON_SECONDARY,
-				"view-reveal-symbolic");
-		g_signal_connect(ctx->input_field, "icon-release", G_CALLBACK(toggle_pw_visibility), NULL);
-		g_signal_connect(ctx->input_field, "activate", G_CALLBACK(window_pwcheck), ctx);
+		window_pw_set_vis((GtkEntry*)ctx->input_field, FALSE);
+		g_signal_connect(ctx->input_field, "icon-release", G_CALLBACK(window_pw_toggle_vis), NULL);
+		g_signal_connect(ctx->input_field, "activate", G_CALLBACK(window_pw_check), ctx);
 		gtk_widget_set_size_request(ctx->input_field, 384, -1);
 		gtk_widget_set_halign(ctx->input_field, GTK_ALIGN_END);
 		gtk_container_add(GTK_CONTAINER(question_box), ctx->input_field);
@@ -139,7 +140,7 @@ static void window_setup_input(struct Window *ctx) {
 
 		ctx->unlock_button = gtk_button_new_with_label("Unlock");
 		GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(ctx->unlock_button);
-		g_signal_connect(ctx->unlock_button, "clicked", G_CALLBACK(window_pwcheck), ctx);
+		g_signal_connect(ctx->unlock_button, "clicked", G_CALLBACK(window_pw_check), ctx);
 		gtk_style_context_add_class(unlock_button_style, "suggested-action");
 		gtk_widget_set_halign(ctx->unlock_button, GTK_ALIGN_END);
 		gtk_container_add(GTK_CONTAINER(button_box), ctx->unlock_button);
@@ -223,6 +224,9 @@ static void window_set_focus(struct Window *win, struct Window *old) {
 			// Update new cursor position
 			g_signal_emit_by_name((GtkEntry*)win->input_field, "move-cursor", GTK_MOVEMENT_BUFFER_ENDS, -1, FALSE);
 			g_signal_emit_by_name((GtkEntry*)win->input_field, "move-cursor", GTK_MOVEMENT_LOGICAL_POSITIONS, cursor_pos, FALSE);
+
+			// Copy pw visibility
+			window_pw_set_vis((GtkEntry*)win->input_field, gtk_entry_get_visibility((GtkEntry*)old->input_field));
 		}
 		window_setup(old);
 		gtk_widget_show_all(old->window);
