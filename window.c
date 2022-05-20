@@ -120,7 +120,6 @@ static void window_setup_input(struct Window *ctx) {
 		ctx->input_field = gtk_entry_new();
 		gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
 		gtk_entry_set_visibility((GtkEntry*)ctx->input_field, FALSE);
-		gtk_entry_set_placeholder_text((GtkEntry*)ctx->input_field, "Password");
 		gtk_entry_set_icon_from_icon_name((GtkEntry*)ctx->input_field,
 				GTK_ENTRY_ICON_SECONDARY,
 				"view-reveal-symbolic");
