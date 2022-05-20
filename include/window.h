@@ -2,6 +2,8 @@
 #define _WINDOW_H
 
 #include <gtk/gtk.h>
+#include "act/act-user-manager.h"
+#include "act/act-user.h"
 
 struct Window {
     GdkMonitor *monitor;
@@ -10,6 +12,8 @@ struct Window {
     GtkWidget *revealer;
     GtkWidget *window_box;
     GtkWidget *body;
+    GtkWidget *user_revealer;
+    GtkWidget *user_box;
     GtkWidget *user_icon;
     GtkWidget *user_name;
     GtkWidget *input_box;
@@ -17,6 +21,9 @@ struct Window {
     GtkWidget *unlock_button;
     GtkWidget *error_label;
     GtkWidget *clock_label;
+
+	ActUserManager* manager;
+	ActUser* user;
 
     gulong enter_notify_handler;
 };

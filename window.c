@@ -218,30 +218,43 @@ static void window_setup(struct Window *ctx) {
 		window_update_clock(ctx);
 
 		if (gtklock->show_user_info) {
+			ctx->user_revealer = gtk_revealer_new();
+			gtk_widget_set_halign(ctx->user_revealer, GTK_ALIGN_CENTER);
+			gtk_widget_set_name(ctx->user_revealer, "user-revealer");
+			gtk_revealer_set_reveal_child((GtkRevealer *)ctx->user_revealer, TRUE);
+			gtk_revealer_set_transition_type(GTK_REVEALER(ctx->user_revealer), GTK_REVEALER_TRANSITION_TYPE_NONE);
+			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->user_revealer);
+
+			ctx->user_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+			gtk_widget_set_halign(ctx->user_box, GTK_ALIGN_CENTER);
+			gtk_widget_set_name(ctx->user_box, "user-box");
+			gtk_container_add(GTK_CONTAINER(ctx->user_revealer), ctx->user_box);
 			// Profile picture
 			ctx->user_icon = gtk_image_new();
 			gtk_widget_set_name(ctx->user_icon, "user-image");
 			g_object_set(ctx->user_icon, "margin-bottom", 10, NULL);
-			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->user_icon);
+			gtk_container_add(GTK_CONTAINER(ctx->user_box), ctx->user_icon);
 
 			// Profile name
 			ctx->user_name = gtk_label_new(NULL);
 			gtk_widget_set_name(ctx->user_name, "user-name");
 			g_object_set(ctx->user_name, "margin-bottom", 10, NULL);
-			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->user_name);
+			gtk_container_add(GTK_CONTAINER(ctx->user_box), ctx->user_name);
 
-			ActUserManager* manager = act_user_manager_get_default();
-			if (act_user_manager_no_service(manager)) {
+			// Init the manager and the user on first run
+			ctx->manager = act_user_manager_get_default();
+			if (act_user_manager_no_service(ctx->manager)) {
 				fprintf(stderr, "AccountsService is not running!\n");
-				gtk_container_remove(GTK_CONTAINER(ctx->window_box), ctx->user_icon);
-				gtk_container_remove(GTK_CONTAINER(ctx->window_box), ctx->user_name);
+				gtk_container_remove(GTK_CONTAINER(ctx->user_box), ctx->user_icon);
+				gtk_container_remove(GTK_CONTAINER(ctx->user_box), ctx->user_name);
 			} else {
 				const char *username = g_get_user_name();
-				ActUser *user = act_user_manager_get_user(manager, username);
-				g_signal_connect(user, "notify::is-loaded", G_CALLBACK(user_loaded), ctx);
-				g_signal_connect(user, "changed", G_CALLBACK(set_user_data), ctx);
+				ctx->user = act_user_manager_get_user(ctx->manager, username);
+				g_signal_connect(ctx->user, "notify::is-loaded", G_CALLBACK(user_loaded), ctx);
+				g_signal_connect(ctx->user, "changed", G_CALLBACK(set_user_data), ctx);
 			}
 		}
+
 	}
 
 	// Update input area if necessary
@@ -252,6 +265,9 @@ static void window_setup(struct Window *ctx) {
 			gtk_widget_set_name(ctx->body, "body");
 			gtk_widget_set_size_request(ctx->body, 384, -1);
 			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->body);
+
+			gtk_revealer_set_reveal_child((GtkRevealer *)ctx->user_revealer, TRUE);
+
 			window_update_clock(ctx);
 			window_setup_input(ctx);
 		}
@@ -262,6 +278,9 @@ static void window_setup(struct Window *ctx) {
 		ctx->input_field = NULL;
 		ctx->unlock_button = NULL;
 		ctx->error_label = NULL;
+
+		gtk_revealer_set_reveal_child((GtkRevealer *)ctx->user_revealer, FALSE);
+
 		window_update_clock(ctx);
 	}
 
