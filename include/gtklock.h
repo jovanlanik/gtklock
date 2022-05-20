@@ -7,19 +7,19 @@
 struct Window;
 
 struct GtkLock {
-    GtkApplication *app;
-    GArray *windows;
+	GtkApplication *app;
+	GArray *windows;
 
-    struct Window *focused_window;
-    guint draw_clock_source;
+	struct Window *focused_window;
+	guint draw_clock_source;
 
-    gboolean use_layer_shell;
-    gboolean use_input_inhibit;
+	gboolean use_layer_shell;
+	gboolean use_input_inhibit;
 	gboolean show_user_info;
-    char *error;
-    char time[8];
+	char *error;
+	char time[8];
 
-    void *auth_handle;
+	void *auth_handle;
 };
 
 extern struct GtkLock *gtklock;
