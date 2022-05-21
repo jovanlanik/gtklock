@@ -3,12 +3,15 @@
 #include <assert.h>
 #include <gtk/gtk.h>
 
+#include "auth.h"
 #include "window.h"
 #include "gtklock.h"
+#include "module.h"
 
 struct GtkLock *gtklock = NULL;
 
-static char* style = NULL;
+static char *style_path = NULL;
+static char *module_path = NULL;
 
 static gboolean should_daemonize = FALSE;
 static gboolean no_layer_shell = FALSE;
@@ -18,7 +21,8 @@ static GOptionEntry entries[] = {
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
 	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL },
 	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL },
-	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style, "CSS style to use", NULL },
+	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style_path, "CSS style to use", NULL },
+	{ "module", 'm', 0, G_OPTION_ARG_FILENAME, &module_path, "gtklock module to use", NULL },
 	{ NULL },
 };
 
@@ -60,6 +64,7 @@ static void reload_outputs() {
 	}
 
 	g_array_unref(dead_windows);
+	module_on_output_change(gtklock);
 }
 
 static void monitors_changed(GdkDisplay *display, GdkMonitor *monitor) {
@@ -81,8 +86,8 @@ static void activate(GtkApplication *app, gpointer user_data) {
 	if(!setup_layer_shell()) {
 		struct Window *win = create_window(NULL);
 		gtklock_focus_window(gtklock, win);
-		window_configure(win);
 	}
+	module_on_activation(gtklock);
 }
 
 static void attach_custom_style(const char* path) {
@@ -126,14 +131,21 @@ int main(int argc, char **argv) {
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
 		g_error("Option parsing failed: %s\n", error->message);
 
+	auth_start();
+
 	gtklock = create_gtklock();
 	gtklock->use_layer_shell = !no_layer_shell;
 	gtklock->use_input_inhibit = !no_input_inhibit;
 
-	if(style != NULL) attach_custom_style(style);
+	if(style_path != NULL) attach_custom_style(style_path);
+	GModule *module = NULL;
+	if(module_path != NULL)  module_load(module_path);
 
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
+
+	if(module != NULL) g_module_close(module);
 	gtklock_destroy(gtklock);
+	auth_end();
 	return status;
 }

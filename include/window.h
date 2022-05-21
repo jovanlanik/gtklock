@@ -4,19 +4,22 @@
 #include <gtk/gtk.h>
 
 struct Window {
-    GdkMonitor *monitor;
+	GdkMonitor *monitor;
 
-    GtkWidget *window;
-    GtkWidget *revealer;
-    GtkWidget *window_box;
-    GtkWidget *body;
-    GtkWidget *input_box;
-    GtkWidget *input_field;
-    GtkWidget *unlock_button;
-    GtkWidget *error_label;
-    GtkWidget *clock_label;
+	GtkWidget *window;
+	GtkWidget *revealer;
+	GtkWidget *window_box;
+	GtkWidget *body;
+	GtkWidget *input_box;
+	GtkWidget *input_label;
+	GtkWidget *input_field;
+	GtkWidget *unlock_button;
+	GtkWidget *error_label;
+	GtkWidget *clock_label;
 
-    gulong enter_notify_handler;
+	gulong enter_notify_handler;
+
+	void *module_data;
 };
 
 struct Window *create_window(GdkMonitor *monitor);

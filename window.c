@@ -9,8 +9,7 @@
 #include "window.h"
 #include "gtklock.h"
 #include "auth.h"
-
-static void window_set_focus(struct Window *win, struct Window *old);
+#include "module.h"
 
 static void window_set_focus_layer_shell(struct Window *win, struct Window *old) {
 	if(old != NULL) gtk_layer_set_keyboard_interactivity(GTK_WINDOW(old->window), FALSE);
@@ -59,12 +58,14 @@ static void window_empty(struct Window *ctx) {
 	ctx->clock_label = NULL;
 	ctx->body = NULL;
 	ctx->input_box = NULL;
+	ctx->input_label = NULL;
 	ctx->input_field = NULL;
 	ctx->unlock_button = NULL;
 	ctx->error_label = NULL;
+	module_on_window_empty(gtklock, ctx);
 }
 
-static gboolean window_pwerror(gpointer data) {
+static gboolean window_pw_error(gpointer data) {
 	struct Window *ctx = data;
 
 	gtk_widget_set_sensitive(ctx->unlock_button, TRUE);
@@ -79,9 +80,9 @@ static gboolean window_pwerror(gpointer data) {
 
 static gpointer window_pw_wait(gpointer data) {
 	struct Window *ctx = data;
-	gboolean ret = auth_pwcheck(gtk_entry_get_text((GtkEntry*)ctx->input_field), gtklock->auth_handle);
+	gboolean ret = auth_pwcheck(gtk_entry_get_text((GtkEntry*)ctx->input_field));
 	if(ret != FALSE) g_application_quit(G_APPLICATION(gtklock->app));
-	g_main_context_invoke(NULL, window_pwerror, ctx);
+	g_main_context_invoke(NULL, window_pw_error, ctx);
 	return NULL;
 }
 
@@ -117,9 +118,9 @@ static void window_setup_input(struct Window *ctx) {
 		gtk_widget_set_halign(question_box, GTK_ALIGN_END);
 		gtk_container_add(GTK_CONTAINER(ctx->input_box), question_box);
 
-		GtkWidget *label = gtk_label_new("Password:");
-		gtk_widget_set_halign(label, GTK_ALIGN_END);
-		gtk_container_add(GTK_CONTAINER(question_box), label);
+		ctx->input_label = gtk_label_new("Password:");
+		gtk_widget_set_halign(ctx->input_label, GTK_ALIGN_END);
+		gtk_container_add(GTK_CONTAINER(question_box), ctx->input_label);
 
 		ctx->input_field = gtk_entry_new();
 		gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
@@ -190,9 +191,11 @@ static void window_setup(struct Window *ctx) {
 		gtk_widget_destroy(ctx->body);
 		ctx->body = NULL;
 		ctx->input_box = NULL;
+		ctx->input_label = NULL;
 		ctx->input_field = NULL;
 		ctx->unlock_button = NULL;
 		ctx->error_label = NULL;
+		module_on_body_empty(gtklock, ctx);
 		window_update_clock(ctx);
 	}
 
@@ -228,7 +231,6 @@ static void window_set_focus(struct Window *win, struct Window *old) {
 			// Copy pw visibility
 			window_pw_set_vis((GtkEntry*)win->input_field, gtk_entry_get_visibility((GtkEntry*)old->input_field));
 		}
-		window_setup(old);
 		gtk_widget_show_all(old->window);
 	}
 	gtk_widget_show_all(win->window);

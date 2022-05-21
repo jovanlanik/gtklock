@@ -4,8 +4,8 @@
 
 #include "window.h"
 #include "gtklock.h"
+#include "module.h"
 #include "input-inhibitor.h"
-#include "auth.h"
 
 struct Window* gtklock_window_by_widget(struct GtkLock *gtklock, GtkWidget *window) {
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
@@ -41,8 +41,9 @@ void gtklock_focus_window(struct GtkLock *gtklock, struct Window* win) {
 	window_swap_focus(win, old);
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
 		struct Window *ctx = g_array_index(gtklock->windows, struct Window*, idx);
-		window_configure(ctx);
+		if(ctx != win) window_configure(ctx);
 	}
+	module_on_focus_change(gtklock, win, old);
 }
 
 void gtklock_update_clocks(struct GtkLock *gtklock) {
@@ -66,7 +67,6 @@ struct GtkLock* create_gtklock() {
 	gtklock = calloc(1, sizeof(struct GtkLock));
 	gtklock->app = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
 	gtklock->windows = g_array_new(FALSE, TRUE, sizeof(struct Window*));
-	gtklock->auth_handle = auth_start();
 	return gtklock;
 }
 
@@ -77,11 +77,6 @@ void gtklock_activate(struct GtkLock *gtklock) {
 }
 
 void gtklock_destroy(struct GtkLock *gtklock) {
-	if(gtklock->error != NULL) {
-		free(gtklock->error);
-		gtklock->error = NULL;
-	}
-
 	g_object_unref(gtklock->app);
 	g_array_unref(gtklock->windows);
 
@@ -91,7 +86,6 @@ void gtklock_destroy(struct GtkLock *gtklock) {
 	}
 
 	if(gtklock->use_input_inhibit) input_inhibitor_destroy();
-	auth_end(gtklock->auth_handle);
 	free(gtklock);
 }
 

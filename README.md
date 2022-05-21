@@ -7,6 +7,8 @@ gtklock is based on [gtkgreet](https://git.sr.ht/~kennylevinsen/gtkgreet).
 It uses the wlr-layer-shell and wlr-input-inhibitor Wayland protocols
 and works and sway and other wlroots-based compositors.
 
+gtklock also has basic module support, check out the [example-module](https://github.com/jovanlanik/gtklock-example-module).
+
 Available on these repositories:
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/gtklock.svg)](https://repology.org/project/gtklock/versions)
@@ -14,6 +16,7 @@ Available on these repositories:
 - Lock screen: `$ gtklock`
 - Lock screen and daemonize: `$ gtklock -d`
 - Example style with background: `$ gtklock -s ./assets/example-style.css`
+- Lock and load a module: `$ gtklock -m /path/to/module.so`
 - Show help options: `$ gtklock -h`
 ## Building from source
 ```

@@ -13,6 +13,7 @@
 
 static int pam_status;
 static char *password;
+pam_handle_t *handle = NULL;
 
 static int conversation(
 	int num_msg,
@@ -35,8 +36,7 @@ static int conversation(
 	return PAM_SUCCESS;
 }
 
-void *auth_start(void) {
-	pam_handle_t *handle = NULL;
+void auth_start(void) {
 	struct passwd *pw = getpwuid(getuid());
 	if(pw == NULL) g_error("getpwuid() failed");
 	char *username = pw->pw_name;
@@ -44,15 +44,14 @@ void *auth_start(void) {
 	const struct pam_conv conv = { conversation, NULL };
 	pam_status = pam_start("gtklock", username, &conv, &handle);
 	if(pam_status != PAM_SUCCESS) g_error("pam_start() failed");
-	return handle;
 }
 
-void auth_end(void *handle) {
+void auth_end(void) {
 	if(pam_end(handle, pam_status) != PAM_SUCCESS)
 		g_warning("pam_end() failed");
 }
 
-gboolean auth_pwcheck(const char *s, void *handle) {
+gboolean auth_pwcheck(const char *s) {
 	password = strdup(s);
 	if(password == NULL) {
 		g_warning("Failed allocation");
