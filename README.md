@@ -18,7 +18,7 @@ Available on these repositories:
 ## Building from source
 ```
 $ make
-$ make install
+# make install
 ```
 ### Dependencies
 - gtk+3.0
