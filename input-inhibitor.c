@@ -34,8 +34,6 @@ static struct wl_display *wl_display = NULL;
 static struct wl_registry *wl_registry_global = NULL;
 static struct zwlr_input_inhibit_manager_v1 *input_inhibit_manager_global = NULL;
 
-static gboolean has_initialized = FALSE;
-
 static void wl_registry_handle_global(
 	void *_data,
 	struct wl_registry *registry,
@@ -61,12 +59,10 @@ static const struct wl_registry_listener wl_registry_listener = {
 	.global_remove = wl_registry_handle_global_remove,
 };
 
-static void gtk_wayland_init_if_needed(void) {
-	if(has_initialized) return;
-
+static void wayland_init(void) {
 	GdkDisplay *gdk_display = gdk_display_get_default();
-	g_return_if_fail(gdk_display);
-	g_return_if_fail(GDK_IS_WAYLAND_DISPLAY(gdk_display));
+	if(gdk_display == NULL) return;
+	if(GDK_IS_WAYLAND_DISPLAY(gdk_display) == FALSE) return;
 
 	wl_display = gdk_wayland_display_get_wl_display(gdk_display);
 	wl_registry_global = wl_display_get_registry(wl_display);
@@ -74,13 +70,11 @@ static void gtk_wayland_init_if_needed(void) {
 	wl_display_roundtrip(wl_display);
 
 	if(!input_inhibit_manager_global)
-		g_error("Your Wayland compositor does not support wlr-input-inhibitor");
-
-	has_initialized = TRUE;
+		g_error("Your compositor doesn't support wlr-input-inhibitor");
 }
 
 void input_inhibitor_get(void) {
-	gtk_wayland_init_if_needed();
+	wayland_init();
 	if(!input_inhibit_manager_global) return;
 	
 	zwlr_input_inhibit_manager_v1_get_inhibitor(input_inhibit_manager_global);
