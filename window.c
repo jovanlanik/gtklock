@@ -242,7 +242,6 @@ void window_swap_focus(struct Window *win, struct Window *old) {
 }
 
 void window_configure(struct Window *w) {
-	if(gtklock->use_layer_shell) window_setup_layershell(w);
 	window_setup(w);
 	gtk_widget_show_all(w->window);
 }
@@ -260,6 +259,7 @@ struct Window *create_window(GdkMonitor *monitor) {
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
 	gtk_window_set_title(GTK_WINDOW(w->window), "Lockscreen");
 	gtk_window_set_default_size(GTK_WINDOW(w->window), 200, 200);
+	if(gtklock->use_layer_shell) window_setup_layershell(w);
 
 	return w;
 }
