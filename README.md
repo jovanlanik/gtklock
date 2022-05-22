@@ -1,7 +1,7 @@
 # gtklock
 GTK-based lockscreen for Wayland.
 
-![screenshot](https://user-images.githubusercontent.com/21199271/169087480-af61f915-7ab9-40a7-bf73-85fb2ca8586b.png)
+![screenshot](https://user-images.githubusercontent.com/21199271/169707623-2ac5f02b-b6ed-461a-b9a3-5d96440843a2.png)
 ## About
 gtklock is based on [gtkgreet](https://git.sr.ht/~kennylevinsen/gtkgreet).
 It uses the wlr-layer-shell and wlr-input-inhibitor Wayland protocols
