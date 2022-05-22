@@ -74,7 +74,7 @@ static void gtk_wayland_init_if_needed(void) {
 	wl_display_roundtrip(wl_display);
 
 	if(!input_inhibit_manager_global)
-		g_warning("Your Wayland compositor does not support wlr-input-inhibitor");
+		g_error("Your Wayland compositor does not support wlr-input-inhibitor");
 
 	has_initialized = TRUE;
 }
@@ -85,7 +85,7 @@ void input_inhibitor_get(void) {
 	
 	zwlr_input_inhibit_manager_v1_get_inhibitor(input_inhibit_manager_global);
 	if(wl_display_roundtrip(wl_display) == -1 && input_inhibit_manager_global)
-		g_warning("Failed to inhibit input. Is another lockscreen already running?");
+		g_error("Failed to inhibit input. Is another lockscreen already running?");
 }
 
 void input_inhibitor_destroy(void) {
