@@ -65,16 +65,24 @@ static void window_empty(struct Window *ctx) {
 	module_on_window_empty(gtklock, ctx);
 }
 
+static void window_get_busy(struct Window *ctx, gboolean busy) {
+	GdkCursor *cursor = NULL;
+	if(busy) {
+		g_application_mark_busy(G_APPLICATION(gtklock->app));
+		cursor = gdk_cursor_new_from_name(gtk_widget_get_display(ctx->window), "wait");
+	} else g_application_unmark_busy(G_APPLICATION(gtklock->app));
+	gdk_window_set_cursor(gtk_widget_get_window(ctx->window), cursor);
+	if(cursor) g_object_unref(cursor);
+	gtk_widget_set_sensitive(ctx->unlock_button, !busy);
+	gtk_widget_set_sensitive(ctx->input_field, !busy);
+}
+
 static gboolean window_pw_error(gpointer data) {
 	struct Window *ctx = data;
-
-	gtk_widget_set_sensitive(ctx->unlock_button, TRUE);
-	gtk_widget_set_sensitive(ctx->input_field, TRUE);
+	window_get_busy(ctx, FALSE);
 	gtk_entry_set_text(GTK_ENTRY(ctx->input_field), "");
 	gtk_widget_grab_focus(ctx->input_field);
-
 	gtk_label_set_markup(GTK_LABEL(ctx->error_label), "<span color=\"red\">Login failed</span>");
-
 	return G_SOURCE_REMOVE;
 }
 
@@ -88,8 +96,7 @@ static gpointer window_pw_wait(gpointer data) {
 
 static void window_pw_check(GtkWidget *widget, gpointer data) {
 	struct Window *ctx = data;
-	gtk_widget_set_sensitive(ctx->input_field, FALSE);
-	gtk_widget_set_sensitive(ctx->unlock_button, FALSE);
+	window_get_busy(ctx, TRUE);
 	gtk_label_set_text(GTK_LABEL(ctx->error_label), NULL);
 	g_thread_new(NULL, window_pw_wait, ctx);
 }
