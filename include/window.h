@@ -7,7 +7,6 @@ struct Window {
 	GdkMonitor *monitor;
 
 	GtkWidget *window;
-	GtkWidget *revealer;
 	GtkWidget *window_box;
 	GtkWidget *body;
 	GtkWidget *input_box;

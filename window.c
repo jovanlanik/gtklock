@@ -49,12 +49,11 @@ void window_update_clock(struct Window *ctx) {
 }
 
 static void window_empty(struct Window *ctx) {
-	if(ctx->revealer != NULL) {
-		gtk_widget_destroy(ctx->revealer);
-		ctx->revealer = NULL;
+	if(ctx->window_box != NULL) {
+		gtk_widget_destroy(ctx->window_box);
+		ctx->window_box = NULL;
 	}
 
-	ctx->window_box = NULL;
 	ctx->clock_label = NULL;
 	ctx->body = NULL;
 	ctx->input_box = NULL;
@@ -65,7 +64,7 @@ static void window_empty(struct Window *ctx) {
 	module_on_window_empty(gtklock, ctx);
 }
 
-static void window_get_busy(struct Window *ctx, gboolean busy) {
+static void window_set_busy(struct Window *ctx, gboolean busy) {
 	GdkCursor *cursor = NULL;
 	if(busy) {
 		g_application_mark_busy(G_APPLICATION(gtklock->app));
@@ -79,7 +78,7 @@ static void window_get_busy(struct Window *ctx, gboolean busy) {
 
 static gboolean window_pw_error(gpointer data) {
 	struct Window *ctx = data;
-	window_get_busy(ctx, FALSE);
+	window_set_busy(ctx, FALSE);
 	gtk_entry_set_text(GTK_ENTRY(ctx->input_field), "");
 	gtk_widget_grab_focus(ctx->input_field);
 	gtk_label_set_markup(GTK_LABEL(ctx->error_label), "<span color=\"red\">Login failed</span>");
@@ -96,7 +95,7 @@ static gpointer window_pw_wait(gpointer data) {
 
 static void window_pw_check(GtkWidget *widget, gpointer data) {
 	struct Window *ctx = data;
-	window_get_busy(ctx, TRUE);
+	window_set_busy(ctx, TRUE);
 	gtk_label_set_text(GTK_LABEL(ctx->error_label), NULL);
 	g_thread_new(NULL, window_pw_wait, ctx);
 }
@@ -118,39 +117,33 @@ static void window_setup_input(struct Window *ctx) {
 			gtk_widget_destroy(ctx->input_box);
 			ctx->input_box = NULL;
 		}
-		ctx->input_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+		ctx->input_box = gtk_grid_new();
+		gtk_grid_set_row_spacing(GTK_GRID(ctx->input_box), 5);
+		gtk_grid_set_column_spacing(GTK_GRID(ctx->input_box), 5);
 		gtk_container_add(GTK_CONTAINER(ctx->body), ctx->input_box);
 
-		GtkWidget *question_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-		gtk_widget_set_halign(question_box, GTK_ALIGN_END);
-		gtk_container_add(GTK_CONTAINER(ctx->input_box), question_box);
-
 		ctx->input_label = gtk_label_new("Password:");
-		gtk_widget_set_halign(ctx->input_label, GTK_ALIGN_END);
-		gtk_container_add(GTK_CONTAINER(question_box), ctx->input_label);
+		gtk_grid_attach(GTK_GRID(ctx->input_box), ctx->input_label, 0, 0, 1, 1);
 
 		ctx->input_field = gtk_entry_new();
 		gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
 		window_pw_set_vis((GtkEntry*)ctx->input_field, FALSE);
 		g_signal_connect(ctx->input_field, "icon-release", G_CALLBACK(window_pw_toggle_vis), NULL);
 		g_signal_connect(ctx->input_field, "activate", G_CALLBACK(window_pw_check), ctx);
-		gtk_widget_set_size_request(ctx->input_field, 384, -1);
-		gtk_widget_set_halign(ctx->input_field, GTK_ALIGN_END);
-		gtk_container_add(GTK_CONTAINER(question_box), ctx->input_field);
+		gtk_widget_set_size_request(ctx->input_field, 380, -1);
+		gtk_grid_attach(GTK_GRID(ctx->input_box), ctx->input_field, 1, 0, 2, 1);
 
 		GtkWidget *button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 		gtk_widget_set_halign(button_box, GTK_ALIGN_END);
-		gtk_container_add(GTK_CONTAINER(ctx->input_box), button_box);
+		gtk_grid_attach(GTK_GRID(ctx->input_box), button_box, 1, 1, 2, 1);
 
 		ctx->error_label = gtk_label_new(NULL);
-		gtk_widget_set_halign(ctx->error_label, GTK_ALIGN_END);
 		gtk_container_add(GTK_CONTAINER(button_box), ctx->error_label);
 
 		ctx->unlock_button = gtk_button_new_with_label("Unlock");
 		GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(ctx->unlock_button);
 		g_signal_connect(ctx->unlock_button, "clicked", G_CALLBACK(window_pw_check), ctx);
 		gtk_style_context_add_class(unlock_button_style, "suggested-action");
-		gtk_widget_set_halign(ctx->unlock_button, GTK_ALIGN_END);
 		gtk_container_add(GTK_CONTAINER(button_box), ctx->unlock_button);
 
 		if(ctx->input_field != NULL) gtk_widget_grab_focus(ctx->input_field);
@@ -158,25 +151,15 @@ static void window_setup_input(struct Window *ctx) {
 
 static void window_setup(struct Window *ctx) {
 	// Create general structure if it is missing
-	if(ctx->revealer == NULL) {
-		ctx->revealer = gtk_revealer_new();
-		g_object_set(ctx->revealer, "margin-bottom", 100, NULL);
-		g_object_set(ctx->revealer, "margin-top", 100, NULL);
-		g_object_set(ctx->revealer, "margin-left", 100, NULL);
-		g_object_set(ctx->revealer, "margin-right", 100, NULL);
-		gtk_widget_set_valign(ctx->revealer, GTK_ALIGN_CENTER);
-		gtk_container_add(GTK_CONTAINER(ctx->window), ctx->revealer);
-		gtk_revealer_set_transition_type(GTK_REVEALER(ctx->revealer), GTK_REVEALER_TRANSITION_TYPE_NONE);
-		gtk_revealer_set_reveal_child(GTK_REVEALER(ctx->revealer), FALSE);
-		gtk_revealer_set_transition_duration(GTK_REVEALER(ctx->revealer), 750);
-	}
-
 	if(ctx->window_box == NULL) {
 		ctx->window_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+		g_object_set(ctx->window_box, "margin", 100, NULL);
+		gtk_widget_set_valign(ctx->window_box, GTK_ALIGN_CENTER);
 		gtk_widget_set_name(ctx->window_box, "window");
-		gtk_container_add(GTK_CONTAINER(ctx->revealer), ctx->window_box);
+		gtk_container_add(GTK_CONTAINER(ctx->window), ctx->window_box);
 
 		ctx->clock_label = gtk_label_new("");
+		gtk_widget_set_halign(ctx->clock_label, GTK_ALIGN_CENTER);
 		gtk_widget_set_name(ctx->clock_label, "clock");
 		g_object_set(ctx->clock_label, "margin-bottom", 10, NULL);
 		gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->clock_label);
@@ -194,7 +177,8 @@ static void window_setup(struct Window *ctx) {
 			window_update_clock(ctx);
 			window_setup_input(ctx);
 		}
-	} else if(ctx->body != NULL) {
+	}
+	else if(ctx->body != NULL) {
 		gtk_widget_destroy(ctx->body);
 		ctx->body = NULL;
 		ctx->input_box = NULL;
@@ -204,11 +188,6 @@ static void window_setup(struct Window *ctx) {
 		ctx->error_label = NULL;
 		module_on_body_empty(gtklock, ctx);
 		window_update_clock(ctx);
-	}
-
-	if(ctx->revealer != NULL) {
-		gtk_revealer_set_transition_type(GTK_REVEALER(ctx->revealer), GTK_REVEALER_TRANSITION_TYPE_CROSSFADE);
-		gtk_revealer_set_reveal_child(GTK_REVEALER(ctx->revealer), TRUE);
 	}
 }
 
