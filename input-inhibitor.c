@@ -24,61 +24,53 @@ SOFTWARE.
 
 */
 
-#include <gtk/gtk.h>
-#include <gdk/gdk.h>
 #include <gdk/gdkwayland.h>
 
 #include "wlr-input-inhibitor-unstable-v1-client-protocol.h"
 
-static struct wl_display *wl_display = NULL;
-static struct wl_registry *wl_registry_global = NULL;
+static struct wl_display *display = NULL;
+static struct wl_registry *registry_global = NULL;
 static struct zwlr_input_inhibit_manager_v1 *input_inhibit_manager_global = NULL;
 
-static void wl_registry_handle_global(
-	void *_data,
+static void registry_handle_global(
+	void *data,
 	struct wl_registry *registry,
 	uint32_t id,
 	const char *interface,
 	uint32_t version
 ) {
 	// pull out needed globals
-	if(strcmp(interface, zwlr_input_inhibit_manager_v1_interface.name) == 0) {
-		input_inhibit_manager_global = wl_registry_bind(
-			registry,
-			id,
-			&zwlr_input_inhibit_manager_v1_interface,
-			1
-		);
-	}
+	if(strcmp(interface, zwlr_input_inhibit_manager_v1_interface.name) != 0) return;
+	input_inhibit_manager_global = wl_registry_bind(
+		registry,
+		id,
+		&zwlr_input_inhibit_manager_v1_interface,
+		1
+	);
 }
 
-static void wl_registry_handle_global_remove(void *_data, struct wl_registry *_registry, uint32_t _id) { }
+static void registry_handle_global_remove(void *_data, struct wl_registry *_registry, uint32_t _id) { }
 
-static const struct wl_registry_listener wl_registry_listener = {
-	.global = wl_registry_handle_global,
-	.global_remove = wl_registry_handle_global_remove,
+static const struct wl_registry_listener registry_listener = {
+	.global = registry_handle_global,
+	.global_remove = registry_handle_global_remove,
 };
 
-static void wayland_init(void) {
+void input_inhibitor_get(void) {
 	GdkDisplay *gdk_display = gdk_display_get_default();
 	if(gdk_display == NULL) return;
 	if(GDK_IS_WAYLAND_DISPLAY(gdk_display) == FALSE) return;
 
-	wl_display = gdk_wayland_display_get_wl_display(gdk_display);
-	wl_registry_global = wl_display_get_registry(wl_display);
-	wl_registry_add_listener(wl_registry_global, &wl_registry_listener, NULL);
-	wl_display_roundtrip(wl_display);
+	display = gdk_wayland_display_get_wl_display(gdk_display);
+	registry_global = wl_display_get_registry(display);
+	wl_registry_add_listener(registry_global, &registry_listener, NULL);
+	wl_display_roundtrip(display);
 
 	if(!input_inhibit_manager_global)
 		g_error("Your compositor doesn't support wlr-input-inhibitor");
-}
-
-void input_inhibitor_get(void) {
-	wayland_init();
-	if(!input_inhibit_manager_global) return;
 	
 	zwlr_input_inhibit_manager_v1_get_inhibitor(input_inhibit_manager_global);
-	if(wl_display_roundtrip(wl_display) == -1 && input_inhibit_manager_global)
+	if(wl_display_roundtrip(display) == -1 && input_inhibit_manager_global)
 		g_error("Failed to inhibit input. Is another lockscreen already running?");
 }
 

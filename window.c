@@ -22,7 +22,7 @@ static gboolean window_enter_notify(GtkWidget *widget, gpointer data) {
 	return FALSE;
 }
 
-static void window_setup_layershell(struct Window *ctx) {
+static void window_setup_layer_shell(struct Window *ctx) {
 	gtk_widget_add_events(ctx->window, GDK_ENTER_NOTIFY_MASK);
 	if(ctx->enter_notify_handler > 0) {
 		g_signal_handler_disconnect(ctx->window, ctx->enter_notify_handler);
@@ -193,8 +193,9 @@ static void window_setup(struct Window *ctx) {
 }
 
 static void window_destroy_notify(GtkWidget *widget, gpointer data) {
-	window_empty(gtklock_window_by_widget(gtklock, widget));
-	gtklock_remove_window_by_widget(gtklock, widget);
+	struct Window *win = gtklock_window_by_widget(gtklock, widget);
+	window_empty(win);
+	gtklock_remove_window(gtklock, win);
 }
 
 static void window_set_focus(struct Window *win, struct Window *old) {
@@ -235,10 +236,7 @@ void window_configure(struct Window *w) {
 
 struct Window *create_window(GdkMonitor *monitor) {
 	struct Window *w = calloc(1, sizeof(struct Window));
-	if(w == NULL) {
-		fprintf(stderr, "failed to allocate Window instance\n");
-		exit(1);
-	}
+	if(w == NULL) g_error("Failed to allocate Window instance");
 	w->monitor = monitor;
 	g_array_append_val(gtklock->windows, w);
 
@@ -246,7 +244,7 @@ struct Window *create_window(GdkMonitor *monitor) {
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
 	gtk_window_set_title(GTK_WINDOW(w->window), "Lockscreen");
 	gtk_window_set_default_size(GTK_WINDOW(w->window), 200, 200);
-	if(gtklock->use_layer_shell) window_setup_layershell(w);
+	if(gtklock->use_layer_shell) window_setup_layer_shell(w);
 
 	return w;
 }

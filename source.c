@@ -24,7 +24,7 @@ static GOptionEntry entries[] = {
 	{ NULL },
 };
 
-static void reload_outputs() {
+static void reload_outputs(void) {
 	GdkDisplay *display = gdk_display_get_default();
 
 	// Make note of all existing windows
@@ -69,7 +69,7 @@ static void monitors_changed(GdkDisplay *display, GdkMonitor *monitor) {
 	reload_outputs();
 }
 
-static gboolean setup_layer_shell() {
+static gboolean setup_layer_shell(void) {
 	if(gtklock->use_layer_shell) {
 		reload_outputs();
 		GdkDisplay *display = gdk_display_get_default();
@@ -96,9 +96,10 @@ static void attach_custom_style(const char* path) {
 	if(err != NULL) {
 		g_warning("Style loading failed: %s", err->message);
 		g_error_free(err);
-	} else
+	} else {
 		gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
 			GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+	}
 	g_object_unref(provider);
 }
 
@@ -134,7 +135,7 @@ int main(int argc, char **argv) {
 
 	if(style_path != NULL) attach_custom_style(style_path);
 	GModule *module = NULL;
-	if(module_path != NULL)  module_load(module_path);
+	if(module_path != NULL) module = module_load(module_path);
 
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);

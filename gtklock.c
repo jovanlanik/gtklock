@@ -23,13 +23,13 @@ struct Window* gtklock_window_by_monitor(struct GtkLock *gtklock, GdkMonitor *mo
 	return NULL;
 }
 
-void gtklock_remove_window_by_widget(struct GtkLock *gtklock, GtkWidget *widget) {
+void gtklock_remove_window(struct GtkLock *gtklock, struct Window *win) {
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
 		struct Window *ctx = g_array_index(gtklock->windows, struct Window*, idx);
-		if(ctx->window == widget) {
+		if(ctx == win) {
 			if(gtklock->focused_window) gtklock->focused_window = NULL;
-			free(ctx);
 			g_array_remove_index_fast(gtklock->windows, idx);
+			free(ctx);
 			return;
 		}
 	}
@@ -63,7 +63,7 @@ static int gtklock_update_clocks_handler(gpointer data) {
 	return TRUE;
 }
 
-struct GtkLock* create_gtklock() {
+struct GtkLock* create_gtklock(void) {
 	gtklock = calloc(1, sizeof(struct GtkLock));
 	gtklock->app = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
 	gtklock->windows = g_array_new(FALSE, TRUE, sizeof(struct Window*));
