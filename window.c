@@ -127,6 +127,7 @@ static void window_setup_input(struct Window *ctx) {
 
 		ctx->input_field = gtk_entry_new();
 		gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
+		g_object_set(ctx->input_field, "caps-lock-warning", FALSE, NULL);
 		window_pw_set_vis((GtkEntry*)ctx->input_field, FALSE);
 		g_signal_connect(ctx->input_field, "icon-release", G_CALLBACK(window_pw_toggle_vis), NULL);
 		g_signal_connect(ctx->input_field, "activate", G_CALLBACK(window_pw_check), ctx);
