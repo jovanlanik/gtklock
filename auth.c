@@ -7,13 +7,10 @@
 
 #include <unistd.h>
 #include <pwd.h>
+#include <sys/wait.h>
 #include <security/pam_appl.h>
 
 #include "auth.h"
-
-static int pam_status;
-static char *password;
-pam_handle_t *handle = NULL;
 
 static int conversation(
 	int num_msg,
@@ -21,6 +18,7 @@ static int conversation(
 	struct pam_response **resp,
 	void *appdata_ptr
 ) {
+	const char *password = appdata_ptr;
 	*resp = calloc(num_msg, sizeof(struct pam_response));
 	if(*resp == NULL) {
 		g_warning("Failed allocation");
@@ -28,38 +26,58 @@ static int conversation(
 	}
 
 	for(int i = 0; i < num_msg; ++i) {
-		if(msg[i]->msg_style != PAM_PROMPT_ECHO_OFF
-			&& msg[i]->msg_style != PAM_PROMPT_ECHO_ON) continue;
 		resp[i]->resp_retcode = 0;
-		resp[i]->resp = password;
+		switch(msg[i]->msg_style) {
+			case PAM_PROMPT_ECHO_OFF:
+			case PAM_PROMPT_ECHO_ON:
+				resp[i]->resp = strdup(password);
+				if(resp[i]->resp == NULL) {
+					g_warning("Failed allocation");
+					return PAM_ABORT;
+				}
+				break;
+			case PAM_ERROR_MSG:
+			case PAM_TEXT_INFO:
+				break;
+		}
 	}
 	return PAM_SUCCESS;
 }
 
-void auth_start(void) {
-	struct passwd *pw = getpwuid(getuid());
-	if(pw == NULL) g_error("getpwuid() failed");
-	char *username = pw->pw_name;
+static void auth_child(const char *s) {
+	struct passwd pwd;
+	struct passwd *result = NULL;
+	size_t len = sysconf(_SC_GETPW_R_SIZE_MAX);
+	char *buf = malloc(len);
 
-	const struct pam_conv conv = { conversation, NULL };
+	getpwuid_r(getuid(), &pwd, buf, len, &result);
+	if(result == NULL) g_error("getpwuid() failed");
+
+	char *username = pwd.pw_name;
+	int pam_status;
+	struct pam_handle *handle;
+	struct pam_conv conv = { conversation, (void *)s };
 	pam_status = pam_start("gtklock", username, &conv, &handle);
 	if(pam_status != PAM_SUCCESS) g_error("pam_start() failed");
-}
 
-void auth_end(void) {
-	if(pam_end(handle, pam_status) != PAM_SUCCESS)
-		g_warning("pam_end() failed");
+	int ret = pam_status = pam_authenticate((pam_handle_t *)handle, 0);
+	pam_status = pam_setcred((pam_handle_t *)handle, PAM_REFRESH_CRED);
+	if(pam_end(handle, pam_status) != PAM_SUCCESS) g_warning("pam_end() failed");
+	if(ret != PAM_SUCCESS) exit(EXIT_FAILURE);
+	exit(EXIT_SUCCESS);
 }
 
 gboolean auth_pwcheck(const char *s) {
-	password = strdup(s);
-	if(password == NULL) {
-		g_warning("Failed allocation");
-		return FALSE;
+	int status;
+	pid_t pid = fork();
+	if(pid == 0) {
+		auth_child(s);
+		g_error("auth_child failure");
 	}
-	pam_status = pam_authenticate((pam_handle_t *)handle, 0);
-	if(pam_status != PAM_SUCCESS) return FALSE;
-	pam_status = pam_setcred((pam_handle_t *)handle, PAM_REFRESH_CRED);
-	return TRUE;
+	waitpid(pid, &status, 0);
+	if(WIFEXITED(status)) {
+		if(WEXITSTATUS(status) == EXIT_SUCCESS) return TRUE;
+	} else g_warning("auth_child failure");
+	return FALSE;
 }
 

@@ -129,8 +129,6 @@ int main(int argc, char **argv) {
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
 		g_error("Option parsing failed: %s\n", error->message);
 
-	auth_start();
-
 	gtklock = create_gtklock();
 	gtklock->use_layer_shell = !no_layer_shell;
 
@@ -143,6 +141,5 @@ int main(int argc, char **argv) {
 
 	if(module != NULL) g_module_close(module);
 	gtklock_destroy(gtklock);
-	auth_end();
 	return status;
 }
