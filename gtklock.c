@@ -27,7 +27,6 @@ void gtklock_remove_window(struct GtkLock *gtklock, struct Window *win) {
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
 		struct Window *ctx = g_array_index(gtklock->windows, struct Window*, idx);
 		if(ctx == win) {
-			if(gtklock->focused_window) gtklock->focused_window = NULL;
 			g_array_remove_index_fast(gtklock->windows, idx);
 			free(ctx);
 			return;

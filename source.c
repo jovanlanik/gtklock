@@ -35,6 +35,7 @@ static void reload_outputs(void) {
 	}
 
 	// Go through all monitors
+	struct Window *new = NULL;
 	for(int i = 0; i < gdk_display_get_n_monitors(display); i++) {
 		GdkMonitor *monitor = gdk_display_get_monitor(display, i);
 		struct Window *w = gtklock_window_by_monitor(gtklock, monitor);
@@ -46,19 +47,23 @@ static void reload_outputs(void) {
 					break;
 				}
 			}
-		} else create_window(monitor);
+		} else w = create_window(monitor);
+		new = w;
 	}
 
 	// Remove all windows left behind
 	for(guint idx = 0; idx < dead_windows->len; idx++) {
 		struct Window *w = g_array_index(dead_windows, struct Window*, idx);
+		if(gtklock->focused_window == w) {
+			gtklock->focused_window = NULL;
+			if(new) window_swap_focus(new, w);
+		}
 		gtk_widget_destroy(w->window);
-		if(gtklock->focused_window == w) gtklock->focused_window = NULL;
 	}
 
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
-		struct Window *win = g_array_index(gtklock->windows, struct Window*, idx);
-		window_configure(win);
+		struct Window *w = g_array_index(gtklock->windows, struct Window*, idx);
+		window_configure(w);
 	}
 
 	g_array_unref(dead_windows);
