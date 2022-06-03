@@ -12,8 +12,8 @@
 #include "module.h"
 
 static void window_set_focus_layer_shell(struct Window *win, struct Window *old) {
-	if(old != NULL) gtk_layer_set_keyboard_interactivity(GTK_WINDOW(old->window), FALSE);
-	gtk_layer_set_keyboard_interactivity(GTK_WINDOW(win->window), TRUE);
+	if(old != NULL) gtk_layer_set_keyboard_mode(GTK_WINDOW(old->window), GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
+	gtk_layer_set_keyboard_mode(GTK_WINDOW(win->window), GTK_LAYER_SHELL_KEYBOARD_MODE_EXCLUSIVE);
 }
 
 static gboolean window_enter_notify(GtkWidget *widget, gpointer data) {
@@ -243,8 +243,9 @@ struct Window *create_window(GdkMonitor *monitor) {
 	w->window = gtk_application_window_new(gtklock->app);
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
 	gtk_window_set_title(GTK_WINDOW(w->window), "Lockscreen");
-	gtk_window_set_default_size(GTK_WINDOW(w->window), 200, 200);
+	gtk_window_set_decorated(GTK_WINDOW(w->window), FALSE);
 	if(gtklock->use_layer_shell) window_setup_layer_shell(w);
 
 	return w;
 }
+
