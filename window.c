@@ -113,41 +113,41 @@ static void window_pw_toggle_vis(GtkEntry* entry, GtkEntryIconPosition icon_pos)
 }
 
 static void window_setup_input(struct Window *ctx) {
-		if(ctx->input_box != NULL) {
-			gtk_widget_destroy(ctx->input_box);
-			ctx->input_box = NULL;
-		}
-		ctx->input_box = gtk_grid_new();
-		gtk_grid_set_row_spacing(GTK_GRID(ctx->input_box), 5);
-		gtk_grid_set_column_spacing(GTK_GRID(ctx->input_box), 5);
-		gtk_container_add(GTK_CONTAINER(ctx->body), ctx->input_box);
+	if(ctx->input_box != NULL) {
+		gtk_widget_destroy(ctx->input_box);
+		ctx->input_box = NULL;
+	}
+	ctx->input_box = gtk_grid_new();
+	gtk_grid_set_row_spacing(GTK_GRID(ctx->input_box), 5);
+	gtk_grid_set_column_spacing(GTK_GRID(ctx->input_box), 5);
+	gtk_container_add(GTK_CONTAINER(ctx->body), ctx->input_box);
 
-		ctx->input_label = gtk_label_new("Password:");
-		gtk_grid_attach(GTK_GRID(ctx->input_box), ctx->input_label, 0, 0, 1, 1);
+	ctx->input_label = gtk_label_new("Password:");
+	gtk_grid_attach(GTK_GRID(ctx->input_box), ctx->input_label, 0, 0, 1, 1);
 
-		ctx->input_field = gtk_entry_new();
-		gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
-		g_object_set(ctx->input_field, "caps-lock-warning", FALSE, NULL);
-		window_pw_set_vis((GtkEntry*)ctx->input_field, FALSE);
-		g_signal_connect(ctx->input_field, "icon-release", G_CALLBACK(window_pw_toggle_vis), NULL);
-		g_signal_connect(ctx->input_field, "activate", G_CALLBACK(window_pw_check), ctx);
-		gtk_widget_set_size_request(ctx->input_field, 380, -1);
-		gtk_grid_attach(GTK_GRID(ctx->input_box), ctx->input_field, 1, 0, 2, 1);
+	ctx->input_field = gtk_entry_new();
+	gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
+	g_object_set(ctx->input_field, "caps-lock-warning", FALSE, NULL);
+	window_pw_set_vis((GtkEntry*)ctx->input_field, FALSE);
+	g_signal_connect(ctx->input_field, "icon-release", G_CALLBACK(window_pw_toggle_vis), NULL);
+	g_signal_connect(ctx->input_field, "activate", G_CALLBACK(window_pw_check), ctx);
+	gtk_widget_set_size_request(ctx->input_field, 380, -1);
+	gtk_grid_attach(GTK_GRID(ctx->input_box), ctx->input_field, 1, 0, 2, 1);
 
-		GtkWidget *button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-		gtk_widget_set_halign(button_box, GTK_ALIGN_END);
-		gtk_grid_attach(GTK_GRID(ctx->input_box), button_box, 1, 1, 2, 1);
+	GtkWidget *button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+	gtk_widget_set_halign(button_box, GTK_ALIGN_END);
+	gtk_grid_attach(GTK_GRID(ctx->input_box), button_box, 1, 1, 2, 1);
 
-		ctx->error_label = gtk_label_new(NULL);
-		gtk_container_add(GTK_CONTAINER(button_box), ctx->error_label);
+	ctx->error_label = gtk_label_new(NULL);
+	gtk_container_add(GTK_CONTAINER(button_box), ctx->error_label);
 
-		ctx->unlock_button = gtk_button_new_with_label("Unlock");
-		GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(ctx->unlock_button);
-		g_signal_connect(ctx->unlock_button, "clicked", G_CALLBACK(window_pw_check), ctx);
-		gtk_style_context_add_class(unlock_button_style, "suggested-action");
-		gtk_container_add(GTK_CONTAINER(button_box), ctx->unlock_button);
+	ctx->unlock_button = gtk_button_new_with_label("Unlock");
+	GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(ctx->unlock_button);
+	g_signal_connect(ctx->unlock_button, "clicked", G_CALLBACK(window_pw_check), ctx);
+	gtk_style_context_add_class(unlock_button_style, "suggested-action");
+	gtk_container_add(GTK_CONTAINER(button_box), ctx->unlock_button);
 
-		if(ctx->input_field != NULL) gtk_widget_grab_focus(ctx->input_field);
+	if(ctx->input_field != NULL) gtk_widget_grab_focus(ctx->input_field);
 }
 
 static void window_setup(struct Window *ctx) {
