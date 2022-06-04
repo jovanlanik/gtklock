@@ -24,7 +24,9 @@ $ make
 # make install
 ```
 ### Dependencies
+- GNU Make (build-time)
+- pkg-config (build-time)
+- PAM
+- wayland-client
 - gtk+3.0
 - gtk-layer-shell
-- wayland-client
-- PAM
