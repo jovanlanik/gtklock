@@ -59,24 +59,70 @@ static void window_empty(struct Window *ctx) {
 	ctx->input_box = NULL;
 	ctx->input_label = NULL;
 	ctx->input_field = NULL;
+	ctx->message_box = NULL;
 	ctx->unlock_button = NULL;
 	ctx->error_label = NULL;
 	module_on_window_empty(gtklock, ctx);
 }
 
+static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) {
+	gtk_widget_destroy(GTK_WIDGET(bar));
+	for(guint idx = 0; idx < gtklock->messages->len; idx++) {
+		char *msg = g_array_index(gtklock->messages, char *, idx);
+		if(msg == data) {
+			g_array_remove_index_fast(gtklock->messages, idx);
+			free(msg);
+			return;
+		}
+	}
+}
+
+static GtkInfoBar *window_new_message(struct Window *ctx, char *msg) {
+	GtkWidget *bar = gtk_info_bar_new();
+	gtk_info_bar_set_show_close_button(GTK_INFO_BAR(bar), TRUE);
+	g_signal_connect(bar, "response", G_CALLBACK(window_close_message), msg);
+	gtk_container_add(GTK_CONTAINER(ctx->message_box), bar);
+
+	GtkWidget *content_area = gtk_info_bar_get_content_area(GTK_INFO_BAR(bar));
+	GtkWidget *label = gtk_label_new(msg);
+	gtk_container_add(GTK_CONTAINER(content_area), label);
+	return GTK_INFO_BAR(bar);
+}
+
+static void window_setup_messages(struct Window *ctx) {
+	if(ctx->message_box != NULL) {
+		gtk_widget_destroy(ctx->message_box);
+		ctx->message_box = NULL;
+	}
+	ctx->message_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+	gtk_grid_attach(GTK_GRID(ctx->input_box), ctx->message_box, 1, 1, 2, 1);
+
+	for(guint idx = 0; idx < gtklock->errors->len; idx++) {
+		char *err = g_array_index(gtklock->errors, char *, idx);
+		GtkInfoBar *bar = window_new_message(ctx, err);
+		gtk_info_bar_set_message_type(bar, GTK_MESSAGE_WARNING);
+	}
+	for(guint idx = 0; idx < gtklock->messages->len; idx++) {
+		char *msg = g_array_index(gtklock->messages, char *, idx);
+		GtkInfoBar *bar = window_new_message(ctx, msg);
+		gtk_info_bar_set_message_type(bar, GTK_MESSAGE_INFO);
+	}
+	gtk_widget_show_all(ctx->message_box);
+}
+
 static void window_set_busy(struct Window *ctx, gboolean busy) {
-	GdkCursor *cursor = NULL;
-	if(busy) {
-		g_application_mark_busy(G_APPLICATION(gtklock->app));
-		cursor = gdk_cursor_new_from_name(gtk_widget_get_display(ctx->window), "wait");
-	} else g_application_unmark_busy(G_APPLICATION(gtklock->app));
+	if(busy) g_application_mark_busy(G_APPLICATION(gtklock->app));
+	else g_application_unmark_busy(G_APPLICATION(gtklock->app));
+
+	GdkCursor *cursor = gdk_cursor_new_from_name(gtk_widget_get_display(ctx->window), busy ? "wait" : "default");
 	gdk_window_set_cursor(gtk_widget_get_window(ctx->window), cursor);
-	if(cursor) g_object_unref(cursor);
+	g_object_unref(cursor);
+
 	gtk_widget_set_sensitive(ctx->unlock_button, !busy);
 	gtk_widget_set_sensitive(ctx->input_field, !busy);
 }
 
-static gboolean window_pw_error(gpointer data) {
+static gboolean window_pw_failure(gpointer data) {
 	struct Window *ctx = data;
 	window_set_busy(ctx, FALSE);
 	gtk_entry_set_text(GTK_ENTRY(ctx->input_field), "");
@@ -85,12 +131,42 @@ static gboolean window_pw_error(gpointer data) {
 	return G_SOURCE_REMOVE;
 }
 
+static gboolean window_pw_message(gpointer data) {
+	window_setup_messages((struct Window *)data);
+	return G_SOURCE_REMOVE;
+}
+
 static gpointer window_pw_wait(gpointer data) {
 	struct Window *ctx = data;
-	gboolean ret = auth_pwcheck(gtk_entry_get_text((GtkEntry*)ctx->input_field));
-	if(ret != FALSE) g_application_quit(G_APPLICATION(gtklock->app));
-	g_main_context_invoke(NULL, window_pw_error, ctx);
-	return NULL;
+	const char *password = gtk_entry_get_text((GtkEntry*)ctx->input_field);
+	while(TRUE) {
+		enum pwcheck ret = auth_pw_check(password);
+		switch(ret) {
+			case PW_WAIT:
+				continue;
+			case PW_FAILURE:
+				g_main_context_invoke(NULL, window_pw_failure, ctx);
+				return NULL;
+			case PW_SUCCESS:
+				g_application_quit(G_APPLICATION(gtklock->app));
+				return NULL;
+			case PW_ERROR:
+				{
+					char *err = auth_get_error();
+					g_array_append_val(gtklock->errors, err);
+					g_main_context_invoke(NULL, window_pw_message, ctx);
+				}
+				break;
+			case PW_MESSAGE:
+				{
+					char *msg = auth_get_message();
+					g_array_append_val(gtklock->messages, msg);
+					g_main_context_invoke(NULL, window_pw_message, ctx);
+				}
+				break;
+		}
+	}
+
 }
 
 static void window_pw_check(GtkWidget *widget, gpointer data) {
@@ -137,7 +213,7 @@ static void window_setup_input(struct Window *ctx) {
 
 	GtkWidget *button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 	gtk_widget_set_halign(button_box, GTK_ALIGN_END);
-	gtk_grid_attach(GTK_GRID(ctx->input_box), button_box, 1, 1, 2, 1);
+	gtk_grid_attach(GTK_GRID(ctx->input_box), button_box, 1, 2, 2, 1);
 
 	ctx->error_label = gtk_label_new(NULL);
 	gtk_widget_set_name(ctx->error_label, "error-label");
@@ -180,6 +256,7 @@ static void window_setup(struct Window *ctx) {
 			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->body);
 			window_update_clock(ctx);
 			window_setup_input(ctx);
+			window_setup_messages(ctx);
 		}
 	}
 	else if(ctx->body != NULL) {
@@ -188,6 +265,7 @@ static void window_setup(struct Window *ctx) {
 		ctx->input_box = NULL;
 		ctx->input_label = NULL;
 		ctx->input_field = NULL;
+		ctx->message_box = NULL;
 		ctx->unlock_button = NULL;
 		ctx->error_label = NULL;
 		module_on_body_empty(gtklock, ctx);

@@ -8,9 +8,25 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/wait.h>
+#include <glib-unix.h>
+#include <glib/gstdio.h>
 #include <security/pam_appl.h>
 
 #include "auth.h"
+
+static GString *error_string = NULL;
+static GString *message_string = NULL;
+
+static char *get_and_free_string(GString **str) {
+	if(str == NULL || *str == NULL) return NULL;
+	char *buff = (*str)->str;
+	g_string_free(*str, FALSE);
+	*str = NULL;
+	return buff;
+}
+
+char *auth_get_error(void) { return get_and_free_string(&error_string); }
+char *auth_get_message(void) { return get_and_free_string(&message_string); }
 
 static int conversation(
 	int num_msg,
@@ -37,7 +53,12 @@ static int conversation(
 				}
 				break;
 			case PAM_ERROR_MSG:
+				fprintf(stderr, "%s", msg[i]->msg);
+				fputc(EOF, stderr);
+				break;
 			case PAM_TEXT_INFO:
+				fprintf(stdout, "%s", msg[i]->msg);
+				fputc(EOF, stdout);
 				break;
 		}
 	}
@@ -67,17 +88,57 @@ static void auth_child(const char *s) {
 	exit(EXIT_SUCCESS);
 }
 
-gboolean auth_pwcheck(const char *s) {
-	int status;
-	pid_t pid = fork();
-	if(pid == 0) {
-		auth_child(s);
-		g_error("auth_child failure");
+enum pwcheck auth_pw_check(const char *s) {
+	static int err_pipe[2];
+	static int out_pipe[2];
+	static pid_t pid = -2;
+
+	if(pid < 0) {
+		// TODO: GError
+		// TODO: if pipes fail open /dev/null as stderr and stdout
+		if(!g_unix_open_pipe(err_pipe, 0, NULL)) g_error("pipe failure");
+		if(!g_unix_open_pipe(out_pipe, 0, NULL)) g_error("pipe failure");
+		pid = fork();
+		if(pid == 0) {
+			close(err_pipe[0]);
+			close(out_pipe[0]);
+			dup2(err_pipe[1], STDERR_FILENO);
+			dup2(out_pipe[1], STDOUT_FILENO);
+			freopen("/dev/null", "r", stdin);
+			auth_child(s);
+			g_error("auth_child failure");
+		}
+		g_close(err_pipe[1], NULL);
+		g_close(out_pipe[1], NULL);
 	}
-	waitpid(pid, &status, 0);
+
+	if(error_string == NULL) error_string = g_string_new("");
+	if(message_string == NULL) message_string = g_string_new("");
+
+	// TODO: don't if pipes failed (or maybe read always fails safely?)
+	char buff[128];
+	int nread;
+	gboolean has_read = FALSE;
+	while((nread = read(err_pipe[0], buff, 127))) {
+		buff[nread-1] = '\0';
+		g_string_append(error_string, buff);
+		has_read = TRUE;
+	}
+	if(has_read) return PW_ERROR;
+	while((nread = read(out_pipe[0], buff, 127))) {
+		buff[nread-1] = '\0';
+		g_string_append(message_string, buff);
+		has_read = TRUE;
+	}
+	if(has_read) return PW_MESSAGE;
+
+	int status;
+	waitpid(pid, &status, WNOHANG);
 	if(WIFEXITED(status)) {
-		if(WEXITSTATUS(status) == EXIT_SUCCESS) return TRUE;
-	} else g_warning("auth_child failure");
-	return FALSE;
+		pid = -1;
+		if(WEXITSTATUS(status) == EXIT_SUCCESS) return PW_SUCCESS;
+		else return PW_FAILURE;
+	}
+	return PW_WAIT;
 }
 

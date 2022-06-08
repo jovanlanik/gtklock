@@ -12,6 +12,7 @@ struct Window {
 	GtkWidget *input_box;
 	GtkWidget *input_label;
 	GtkWidget *input_field;
+	GtkWidget *message_box;
 	GtkWidget *unlock_button;
 	GtkWidget *error_label;
 	GtkWidget *clock_label;

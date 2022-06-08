@@ -9,6 +9,8 @@ struct Window;
 struct GtkLock {
 	GtkApplication *app;
 	GArray *windows;
+	GArray *messages;
+	GArray *errors;
 
 	struct Window *focused_window;
 	guint draw_clock_source;
