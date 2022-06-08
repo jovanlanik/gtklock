@@ -34,10 +34,12 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(NAME)
 	rm -f $(DESTDIR)/etc/pam.d/$(NAME)
 
-$(NAME): include/wlr-input-inhibitor-unstable-v1-client-protocol.h $(OBJ)
+$(NAME): $(OBJ)
 
 %-client-protocol.c: wayland/%.xml
 	wayland-scanner private-code $< $@
 
 include/%-client-protocol.h: wayland/%.xml
 	wayland-scanner client-header $< $@
+
+input-inhibitor.c: include/wlr-input-inhibitor-unstable-v1-client-protocol.h 
