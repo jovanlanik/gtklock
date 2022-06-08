@@ -67,6 +67,14 @@ static void window_empty(struct Window *ctx) {
 
 static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) {
 	gtk_widget_destroy(GTK_WIDGET(bar));
+	for(guint idx = 0; idx < gtklock->errors->len; idx++) {
+		char *err = g_array_index(gtklock->errors, char *, idx);
+		if(err == data) {
+			g_array_remove_index_fast(gtklock->errors, idx);
+			free(err);
+			return;
+		}
+	}
 	for(guint idx = 0; idx < gtklock->messages->len; idx++) {
 		char *msg = g_array_index(gtklock->messages, char *, idx);
 		if(msg == data) {
@@ -77,15 +85,28 @@ static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) 
 	}
 }
 
+static void window_hide_message_box(GtkInfoBar *bar, gint response, gpointer data) {
+	struct Window *ctx = data;
+	gtk_widget_hide(ctx->message_box);
+}
+static void window_show_message_box(GtkInfoBar *bar, gint response, gpointer data) {
+	struct Window *ctx = data;
+	if(gtklock->errors->len || gtklock->errors->len) gtk_widget_show(ctx->message_box);
+}
+
 static GtkInfoBar *window_new_message(struct Window *ctx, char *msg) {
 	GtkWidget *bar = gtk_info_bar_new();
 	gtk_info_bar_set_show_close_button(GTK_INFO_BAR(bar), TRUE);
+	g_signal_connect(bar, "response", G_CALLBACK(window_hide_message_box), ctx);
 	g_signal_connect(bar, "response", G_CALLBACK(window_close_message), msg);
+	g_signal_connect(bar, "response", G_CALLBACK(window_show_message_box), ctx);
 	gtk_container_add(GTK_CONTAINER(ctx->message_box), bar);
 
 	GtkWidget *content_area = gtk_info_bar_get_content_area(GTK_INFO_BAR(bar));
 	GtkWidget *label = gtk_label_new(msg);
 	gtk_container_add(GTK_CONTAINER(content_area), label);
+
+	gtk_widget_show_all(bar);
 	return GTK_INFO_BAR(bar);
 }
 
@@ -94,20 +115,22 @@ static void window_setup_messages(struct Window *ctx) {
 		gtk_widget_destroy(ctx->message_box);
 		ctx->message_box = NULL;
 	}
-	ctx->message_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+	ctx->message_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_widget_set_no_show_all(ctx->message_box, TRUE);
 	gtk_grid_attach(GTK_GRID(ctx->input_box), ctx->message_box, 1, 1, 2, 1);
 
 	for(guint idx = 0; idx < gtklock->errors->len; idx++) {
 		char *err = g_array_index(gtklock->errors, char *, idx);
 		GtkInfoBar *bar = window_new_message(ctx, err);
 		gtk_info_bar_set_message_type(bar, GTK_MESSAGE_WARNING);
+		gtk_widget_show(ctx->message_box);
 	}
 	for(guint idx = 0; idx < gtklock->messages->len; idx++) {
 		char *msg = g_array_index(gtklock->messages, char *, idx);
 		GtkInfoBar *bar = window_new_message(ctx, msg);
 		gtk_info_bar_set_message_type(bar, GTK_MESSAGE_INFO);
+		gtk_widget_show(ctx->message_box);
 	}
-	gtk_widget_show_all(ctx->message_box);
 }
 
 static void window_set_busy(struct Window *ctx, gboolean busy) {
