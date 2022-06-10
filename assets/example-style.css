@@ -1,8 +1,7 @@
 window {
-   background-image: url("background.png");
-   background-size: contain;
-   background-repeat: no-repeat;
-   background-position: center;
-   background-color: black;
+	background-image: url("background.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-color: #f6f5f4;
 }
-
