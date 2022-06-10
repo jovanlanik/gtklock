@@ -15,10 +15,12 @@ static char *module_path = NULL;
 
 static gboolean should_daemonize = FALSE;
 static gboolean no_layer_shell = FALSE;
+static gboolean no_input_inhibit = FALSE;
 
 static GOptionEntry entries[] = {
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
 	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL },
+	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL },
 	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style_path, "CSS style to use", NULL },
 	{ "module", 'm', 0, G_OPTION_ARG_FILENAME, &module_path, "gtklock module to use", NULL },
 	{ NULL },
@@ -137,6 +139,7 @@ int main(int argc, char **argv) {
 
 	gtklock = create_gtklock();
 	gtklock->use_layer_shell = !no_layer_shell;
+	gtklock->use_input_inhibit = !no_input_inhibit;
 
 	if(style_path != NULL) attach_custom_style(style_path);
 	GModule *module = NULL;

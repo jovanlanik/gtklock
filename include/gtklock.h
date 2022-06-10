@@ -14,6 +14,7 @@ struct GtkLock {
 	guint draw_clock_source;
 
 	gboolean use_layer_shell;
+	gboolean use_input_inhibit;
 	char time[8];
 };
 
