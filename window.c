@@ -123,6 +123,7 @@ static void window_setup_input(struct Window *ctx) {
 	gtk_container_add(GTK_CONTAINER(ctx->body), ctx->input_box);
 
 	ctx->input_label = gtk_label_new("Password:");
+	gtk_widget_set_name(ctx->input_label, "input-label");
 	gtk_grid_attach(GTK_GRID(ctx->input_box), ctx->input_label, 0, 0, 1, 1);
 
 	ctx->input_field = gtk_entry_new();
@@ -139,6 +140,7 @@ static void window_setup_input(struct Window *ctx) {
 	gtk_grid_attach(GTK_GRID(ctx->input_box), button_box, 1, 1, 2, 1);
 
 	ctx->error_label = gtk_label_new(NULL);
+	gtk_widget_set_name(ctx->error_label, "error-label");
 	gtk_container_add(GTK_CONTAINER(button_box), ctx->error_label);
 
 	ctx->unlock_button = gtk_button_new_with_label("Unlock");
@@ -156,12 +158,13 @@ static void window_setup(struct Window *ctx) {
 		ctx->window_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 		g_object_set(ctx->window_box, "margin", 100, NULL);
 		gtk_widget_set_valign(ctx->window_box, GTK_ALIGN_CENTER);
-		gtk_widget_set_name(ctx->window_box, "window");
+		gtk_widget_set_halign(ctx->window_box, GTK_ALIGN_CENTER);
+		gtk_widget_set_name(ctx->window_box, "window-box");
 		gtk_container_add(GTK_CONTAINER(ctx->window), ctx->window_box);
 
 		ctx->clock_label = gtk_label_new("");
 		gtk_widget_set_halign(ctx->clock_label, GTK_ALIGN_CENTER);
-		gtk_widget_set_name(ctx->clock_label, "clock");
+		gtk_widget_set_name(ctx->clock_label, "clock-label");
 		g_object_set(ctx->clock_label, "margin-bottom", 10, NULL);
 		gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->clock_label);
 		window_update_clock(ctx);
