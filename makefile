@@ -17,18 +17,22 @@ OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o $(SRC:%.c=%.o)
 
 TRASH = $(OBJ) $(NAME) $(wildcard *-client-protocol.c) $(wildcard include/*-client-protocol.h)
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install install-bin install-data uninstall
 
 all: $(NAME)
 
 clean:
 	@rm $(TRASH) | true
 
-install:
+install-bin:
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
-	$(INSTALL) -d $(DESTDIR)/etc/pam.d
 	$(INSTALL) $(NAME) $(DESTDIR)$(PREFIX)/bin/$(NAME)
+
+install-data:
+	$(INSTALL) -d $(DESTDIR)/etc/pam.d
 	$(INSTALL) -m644 pam/$(NAME) $(DESTDIR)/etc/pam.d/$(NAME)
+
+install: install-bin install-data
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(NAME)
