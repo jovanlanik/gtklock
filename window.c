@@ -245,6 +245,7 @@ struct Window *create_window(GdkMonitor *monitor) {
 
 	w->window = gtk_application_window_new(gtklock->app);
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
+	gtk_widget_set_name(w->window, gdk_monitor_get_model(w->monitor));
 	gtk_window_set_title(GTK_WINDOW(w->window), "Lockscreen");
 	gtk_window_set_decorated(GTK_WINDOW(w->window), FALSE);
 	if(gtklock->use_layer_shell) window_setup_layer_shell(w);
