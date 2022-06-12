@@ -237,6 +237,8 @@ void window_configure(struct Window *w) {
 	gtk_widget_show_all(w->window);
 }
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 struct Window *create_window(GdkMonitor *monitor) {
 	struct Window *w = calloc(1, sizeof(struct Window));
 	if(w == NULL) g_error("Failed to allocate Window instance");
@@ -245,7 +247,20 @@ struct Window *create_window(GdkMonitor *monitor) {
 
 	w->window = gtk_application_window_new(gtklock->app);
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
-	gtk_widget_set_name(w->window, gdk_monitor_get_model(w->monitor));
+
+	// This code uses a deprecated function and assumes one GDK screen...
+	// However there isn't really a good way to do this in GTK3 currently.
+	// Related issue: https://gitlab.gnome.org/GNOME/gtk/-/issues/4982
+	char *name = NULL;
+	GdkDisplay *display = gtk_widget_get_display(w->window);
+	GdkScreen *screen = gtk_widget_get_screen(w->window);
+	for(int i = 0; i < gdk_display_get_n_monitors(display); i++) {
+		GdkMonitor *monitor = gdk_display_get_monitor(display, i);
+		if(monitor != w->monitor) continue;
+		name = gdk_screen_get_monitor_plug_name(screen, i);
+	}
+
+	if(name) gtk_widget_set_name(w->window, name);
 	gtk_window_set_title(GTK_WINDOW(w->window), "Lockscreen");
 	gtk_window_set_decorated(GTK_WINDOW(w->window), FALSE);
 	if(gtklock->use_layer_shell) window_setup_layer_shell(w);

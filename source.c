@@ -17,19 +17,10 @@ static gboolean should_daemonize = FALSE;
 static gboolean no_layer_shell = FALSE;
 static gboolean no_input_inhibit = FALSE;
 
-gboolean list_monitors(const gchar* option_name, const gchar* value, gpointer data, GError** error) {
-	gdk_init(0, NULL);
-	GdkDisplay *display = gdk_display_get_default();
-	for(int i = 0; i < gdk_display_get_n_monitors(display); i++)
-		g_print("%s\n", gdk_monitor_get_model(gdk_display_get_monitor(display, i)));
-	exit(0);
-}
-
 static GOptionEntry entries[] = {
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
 	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL },
 	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL },
-	{ "list-monitors", 'o', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, list_monitors, "List monitors and exit" },
 	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style_path, "CSS style to use", NULL },
 	{ "module", 'm', 0, G_OPTION_ARG_FILENAME, &module_path, "gtklock module to use", NULL },
 	{ NULL },
