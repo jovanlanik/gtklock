@@ -14,19 +14,25 @@
 
 #include "auth.h"
 
-static GString *error_string = NULL;
-static GString *message_string = NULL;
+static char *error_string = NULL;
+static char *message_string = NULL;
 
-static char *get_and_free_string(GString **str) {
-	if(str == NULL || *str == NULL) return NULL;
-	char *buff = (*str)->str;
-	g_string_free(*str, FALSE);
-	*str = NULL;
-	return buff;
+char *auth_get_error(void) {
+	char *s = error_string;
+	error_string = NULL;
+	return s;
+}
+char *auth_get_message(void) {
+	char *s = message_string;
+	message_string = NULL;
+	return s;
 }
 
-char *auth_get_error(void) { return get_and_free_string(&error_string); }
-char *auth_get_message(void) { return get_and_free_string(&message_string); }
+static void send_msg(const char *msg, int fd) {
+	size_t len = strlen(msg);
+	write(fd, &len, sizeof(size_t));
+	write(fd, msg, len);
+}
 
 static int conversation(
 	int num_msg,
@@ -53,12 +59,10 @@ static int conversation(
 				}
 				break;
 			case PAM_ERROR_MSG:
-				fprintf(stderr, "%s", msg[i]->msg);
-				fputc(EOF, stderr);
+				send_msg(msg[i]->msg, STDERR_FILENO);
 				break;
 			case PAM_TEXT_INFO:
-				fprintf(stdout, "%s", msg[i]->msg);
-				fputc(EOF, stdout);
+				send_msg(msg[i]->msg, STDOUT_FILENO);
 				break;
 		}
 	}
@@ -81,11 +85,12 @@ static void auth_child(const char *s) {
 	pam_status = pam_start("gtklock", username, &conv, &handle);
 	if(pam_status != PAM_SUCCESS) g_error("pam_start() failed");
 
-	int ret = pam_status = pam_authenticate((pam_handle_t *)handle, 0);
+	int ret = pam_authenticate((pam_handle_t *)handle, 0);
+	pam_status = ret;
 	pam_status = pam_setcred((pam_handle_t *)handle, PAM_REFRESH_CRED);
 	if(pam_end(handle, pam_status) != PAM_SUCCESS) g_warning("pam_end() failed");
-	if(ret != PAM_SUCCESS) exit(EXIT_FAILURE);
-	exit(EXIT_SUCCESS);
+	if(ret == PAM_SUCCESS) exit(EXIT_SUCCESS);
+	exit(EXIT_FAILURE);
 }
 
 enum pwcheck auth_pw_check(const char *s) {
@@ -94,48 +99,61 @@ enum pwcheck auth_pw_check(const char *s) {
 	static pid_t pid = -2;
 
 	if(pid < 0) {
-		// TODO: GError
-		// TODO: if pipes fail open /dev/null as stderr and stdout
-		if(!g_unix_open_pipe(err_pipe, 0, NULL)) g_error("pipe failure");
-		if(!g_unix_open_pipe(out_pipe, 0, NULL)) g_error("pipe failure");
+		if(pipe(err_pipe) != 0) {
+			err_pipe[0] = open("/dev/null", O_RDONLY);
+			err_pipe[1] = open("/dev/null", O_WRONLY);
+		}
+		if(pipe(out_pipe) != 0) {
+			out_pipe[0] = open("/dev/null", O_RDONLY);
+			out_pipe[1] = open("/dev/null", O_WRONLY);
+		}
 		pid = fork();
-		if(pid == 0) {
+		if(pid == -1) {
+			close(err_pipe[0]);
+			close(err_pipe[1]);
+			close(out_pipe[0]);
+			close(out_pipe[1]);
+			g_warning("fork failure");
+			return PW_WAIT;
+		}
+		else if(pid == 0) {
 			close(err_pipe[0]);
 			close(out_pipe[0]);
 			dup2(err_pipe[1], STDERR_FILENO);
 			dup2(out_pipe[1], STDOUT_FILENO);
 			freopen("/dev/null", "r", stdin);
 			auth_child(s);
-			g_error("auth_child failure");
+			exit(EXIT_FAILURE);
 		}
-		g_close(err_pipe[1], NULL);
-		g_close(out_pipe[1], NULL);
+		close(err_pipe[1]);
+		close(out_pipe[1]);
+		fcntl(err_pipe[0], F_SETFL, O_NONBLOCK);
+		fcntl(out_pipe[0], F_SETFL, O_NONBLOCK);
 	}
 
-	if(error_string == NULL) error_string = g_string_new("");
-	if(message_string == NULL) message_string = g_string_new("");
+	if(error_string) free(error_string);
+	if(message_string) free(message_string);
 
-	// TODO: don't if pipes failed (or maybe read always fails safely?)
-	char buff[128];
-	int nread;
-	gboolean has_read = FALSE;
-	while((nread = read(err_pipe[0], buff, 127))) {
-		buff[nread-1] = '\0';
-		g_string_append(error_string, buff);
-		has_read = TRUE;
+	size_t len;
+	ssize_t nread;
+	nread = read(out_pipe[0], &len, sizeof(size_t));
+	if(nread > 0) {
+		message_string = malloc(len);
+		nread = read(out_pipe[0], message_string, len);
+		message_string[nread] = '\0';
+		return PW_MESSAGE;
 	}
-	if(has_read) return PW_ERROR;
-	while((nread = read(out_pipe[0], buff, 127))) {
-		buff[nread-1] = '\0';
-		g_string_append(message_string, buff);
-		has_read = TRUE;
+	nread = read(err_pipe[0], &len, sizeof(size_t));
+	if(nread > 0) {
+		error_string = malloc(len);
+		nread = read(out_pipe[0], error_string, len);
+		error_string[nread] = '\0';
+		return PW_ERROR;
 	}
-	if(has_read) return PW_MESSAGE;
 
 	int status;
-	waitpid(pid, &status, WNOHANG);
-	if(WIFEXITED(status)) {
-		pid = -1;
+	if(waitpid(pid, &status, WNOHANG) != 0 && WIFEXITED(status)) {
+		pid = -2;
 		if(WEXITSTATUS(status) == EXIT_SUCCESS) return PW_SUCCESS;
 		else return PW_FAILURE;
 	}

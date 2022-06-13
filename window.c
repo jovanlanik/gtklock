@@ -65,13 +65,17 @@ static void window_empty(struct Window *ctx) {
 	module_on_window_empty(gtklock, ctx);
 }
 
+static void window_setup_messages(struct Window *ctx);
+
 static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) {
+	struct Window *ctx = gtklock_window_by_widget(gtklock, gtk_widget_get_toplevel(GTK_WIDGET(bar)));
 	gtk_widget_destroy(GTK_WIDGET(bar));
 	for(guint idx = 0; idx < gtklock->errors->len; idx++) {
 		char *err = g_array_index(gtklock->errors, char *, idx);
 		if(err == data) {
 			g_array_remove_index_fast(gtklock->errors, idx);
 			free(err);
+			window_setup_messages(ctx);
 			return;
 		}
 	}
@@ -80,26 +84,16 @@ static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) 
 		if(msg == data) {
 			g_array_remove_index_fast(gtklock->messages, idx);
 			free(msg);
+			window_setup_messages(ctx);
 			return;
 		}
 	}
 }
 
-static void window_hide_message_box(GtkInfoBar *bar, gint response, gpointer data) {
-	struct Window *ctx = data;
-	gtk_widget_hide(ctx->message_box);
-}
-static void window_show_message_box(GtkInfoBar *bar, gint response, gpointer data) {
-	struct Window *ctx = data;
-	if(gtklock->errors->len || gtklock->errors->len) gtk_widget_show(ctx->message_box);
-}
-
 static GtkInfoBar *window_new_message(struct Window *ctx, char *msg) {
 	GtkWidget *bar = gtk_info_bar_new();
 	gtk_info_bar_set_show_close_button(GTK_INFO_BAR(bar), TRUE);
-	g_signal_connect(bar, "response", G_CALLBACK(window_hide_message_box), ctx);
 	g_signal_connect(bar, "response", G_CALLBACK(window_close_message), msg);
-	g_signal_connect(bar, "response", G_CALLBACK(window_show_message_box), ctx);
 	gtk_container_add(GTK_CONTAINER(ctx->message_box), bar);
 
 	GtkWidget *content_area = gtk_info_bar_get_content_area(GTK_INFO_BAR(bar));
@@ -165,8 +159,6 @@ static gpointer window_pw_wait(gpointer data) {
 	while(TRUE) {
 		enum pwcheck ret = auth_pw_check(password);
 		switch(ret) {
-			case PW_WAIT:
-				continue;
 			case PW_FAILURE:
 				g_main_context_invoke(NULL, window_pw_failure, ctx);
 				return NULL;
@@ -186,6 +178,8 @@ static gpointer window_pw_wait(gpointer data) {
 					g_array_append_val(gtklock->messages, msg);
 					g_main_context_invoke(NULL, window_pw_message, ctx);
 				}
+				break;
+			case PW_WAIT:
 				break;
 		}
 	}
