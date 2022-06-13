@@ -7,17 +7,11 @@ gtklock is a lockscreen based on [gtkgreet](https://git.sr.ht/~kennylevinsen/gtk
 It uses the wlr-layer-shell and wlr-input-inhibitor Wayland protocols.
 Works on sway and other wlroots-based compositors.
 
-gtklock also has basic module support, check out the [example-module](https://github.com/jovanlanik/gtklock-example-module).
+__For documentation, check out the [wiki](https://github.com/jovanlanik/gtklock/wiki).__
 
 Available on these repositories:
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/gtklock.svg)](https://repology.org/project/gtklock/versions)
-## Usage
-- Lock screen: `$ gtklock`
-- Lock screen and daemonize: `$ gtklock -d`
-- Example style with background: `$ gtklock -s ./assets/example-style.css`
-- Lock and load a module: `$ gtklock -m /path/to/module.so`
-- Show help options: `$ gtklock -h`
 ## Building from source
 ```
 $ make
