@@ -65,6 +65,7 @@ static int gtklock_update_clocks_handler(gpointer data) {
 struct GtkLock* create_gtklock(void) {
 	gtklock = calloc(1, sizeof(struct GtkLock));
 	gtklock->app = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
+	g_application_hold(G_APPLICATION(gtklock->app));
 	gtklock->windows = g_array_new(FALSE, TRUE, sizeof(struct Window *));
 	gtklock->messages = g_array_new(FALSE, TRUE, sizeof(char *));
 	gtklock->errors = g_array_new(FALSE, TRUE, sizeof(char *));
