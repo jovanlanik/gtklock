@@ -114,6 +114,10 @@ static void daemonize(void) {
 	pid_t pid = fork();
 	if(pid == -1) g_error("Failed to daemonize!\n");
 	else if(pid != 0) exit(0);
+	
+	freopen("/dev/null", "r", stdin);
+	freopen("/dev/null", "w", stdout);
+	freopen("/dev/null", "w", stderr);
 
 	if(setsid() == -1) exit(1);
 	pid = fork();
