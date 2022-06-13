@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
+#include <sys/wait.h>
 #include <gtk/gtk.h>
 
 #include "auth.h"
@@ -16,6 +17,8 @@ static char *module_path = NULL;
 static gboolean should_daemonize = FALSE;
 static gboolean no_layer_shell = FALSE;
 static gboolean no_input_inhibit = FALSE;
+
+static pid_t parent = -2;
 
 static GOptionEntry entries[] = {
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
@@ -93,6 +96,7 @@ static void activate(GtkApplication *app, gpointer user_data) {
 		gtklock_focus_window(gtklock, win);
 	}
 	module_on_activation(gtklock);
+	if(parent > 0) kill(parent, SIGINT);
 }
 
 static void attach_custom_style(const char* path) {
@@ -111,10 +115,19 @@ static void attach_custom_style(const char* path) {
 }
 
 static void daemonize(void) {
+	parent = getpid();
 	pid_t pid = fork();
 	if(pid == -1) g_error("Failed to daemonize!\n");
-	else if(pid != 0) exit(0);
-	
+	else if(pid != 0) {
+		int status;
+		waitpid(pid, &status, 0);
+		if(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS) {
+			g_usleep(G_USEC_PER_SEC);
+			exit(0);
+		}
+		g_error("Failed to daemonize!\n");
+	}
+
 	freopen("/dev/null", "r", stdin);
 	freopen("/dev/null", "w", stdout);
 	freopen("/dev/null", "w", stderr);
