@@ -160,14 +160,14 @@ int main(int argc, char **argv) {
 	gtklock->use_layer_shell = !no_layer_shell;
 	gtklock->use_input_inhibit = !no_input_inhibit;
 
-    if(style_path == NULL){
-        style_path = resolve_xdg_style_path();
-        if(style_path) {
-            printf("gtklock: using %s for styles\n", style_path);
-            attach_custom_style(style_path);
-            free(style_path);
-        }
-    }
+	if(style_path == NULL){
+		style_path = resolve_xdg_style_path();
+		if(style_path) {
+			printf("gtklock: using %s for styles\n", style_path);
+			attach_custom_style(style_path);
+			free(style_path);
+		}
+	}
 
 	GModule *module = NULL;
 	if(module_path != NULL) module = module_load(module_path);
