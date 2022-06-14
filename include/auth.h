@@ -3,6 +3,8 @@
 
 // PAM Authentication
 
+#pragma once
+
 #include <glib.h>
 
 enum pwcheck {

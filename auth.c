@@ -5,11 +5,11 @@
 
 #define _POSIX_C_SOURCE 200809L
 
+#include <stdio.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <fcntl.h>
 #include <sys/wait.h>
-#include <glib-unix.h>
-#include <glib/gstdio.h>
 #include <security/pam_appl.h>
 
 #include "auth.h"

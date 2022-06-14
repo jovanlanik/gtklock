@@ -1,9 +1,12 @@
-#ifndef _GTKGREET_H
-#define _GTKGREET_H
+// gtklock
+// Copyright (c) 2022 Kenny Levinsen, Jovan Lanik
+
+// gtklock application
+
+#pragma once
 
 #include <gtk/gtk.h>
 
-// Defined in window.h
 struct Window;
 
 struct GtkLock {
@@ -31,4 +34,3 @@ struct GtkLock *create_gtklock(void);
 void gtklock_activate(struct GtkLock *gtklock);
 void gtklock_destroy(struct GtkLock *gtklock);
 
-#endif

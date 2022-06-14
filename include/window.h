@@ -1,5 +1,9 @@
-#ifndef _WINDOW_H
-#define _WINDOW_H
+// gtklock
+// Copyright (c) 2022 Kenny Levinsen, Jovan Lanik
+
+// Window functions
+
+#pragma once
 
 #include <gtk/gtk.h>
 
@@ -27,4 +31,3 @@ void window_configure(struct Window *win);
 void window_update_clock(struct Window *ctx);
 void window_swap_focus(struct Window *win, struct Window *old);
 
-#endif

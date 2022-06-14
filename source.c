@@ -1,9 +1,9 @@
-#define _POSIX_C_SOURCE 200809L
+// gtklock
+// Copyright (c) 2022 Kenny Levinsen, Jovan Lanik
 
 #include <assert.h>
 #include <sys/wait.h>
 #include <gtk/gtk.h>
-#include <stdio.h>
 
 #include "auth.h"
 #include "window.h"
@@ -176,3 +176,4 @@ int main(int argc, char **argv) {
 	gtklock_destroy(gtklock);
 	return status;
 }
+

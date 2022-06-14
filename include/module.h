@@ -3,6 +3,8 @@
 
 // Module support
 
+#pragma once
+
 #include <gmodule.h>
 
 #include "gtklock.h"

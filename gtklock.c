@@ -1,4 +1,7 @@
-#define _POSIX_C_SOURCE 200809L
+// gtklock
+// Copyright (c) 2022 Kenny Levinsen, Jovan Lanik
+
+// gtklock application
 
 #include <gtk/gtk.h>
 

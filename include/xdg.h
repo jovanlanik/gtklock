@@ -1,5 +1,5 @@
 // gtklock
-// Copyright (c) 2022 Jovan Lanik
+// Copyright (c) 2022 Louis DeLosSantos, Jovan Lanik
 
 // XDG functions
 
