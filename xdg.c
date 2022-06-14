@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -21,22 +23,18 @@
  * The caller should free the returned pointer when there is no longer use for it.
  */
 char *resolve_xdg_style_path_home(void) {
-	char *style_path = calloc(PATH_MAX, sizeof(char));
+	char *style_path = malloc(PATH_MAX);
 
 	uid_t euid = geteuid();
 	struct passwd *pwd = getpwuid(euid);
-	if(!pwd)
-		goto null;
+	if(!pwd) goto null;
 	strcpy(style_path, pwd->pw_dir);
 	strcat(style_path, HOME_STYLE_SUFFIX);
 
 	struct stat s;
-	if(stat(style_path, &s) == -1)
-		goto null;
+	if(stat(style_path, &s) == -1) goto null;
 
-	if(S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
-		return style_path;
-	}
+	if(S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) return style_path;
 
 null:
 	free(style_path);
@@ -52,19 +50,13 @@ null:
  * The caller should free the returned pointer when there is no longer use for it.
  */
 char *resolve_xdg_style_path_etc(void) {
-	// we could pass back just the global ETC_STYLE_PATH but lets do this so
+	// We could pass back just the global ETC_STYLE_PATH but lets do this so
 	// the usage of free is consistent with resolve_xdg_style_path_home.
-	char *style_path = calloc(sizeof(ETC_STYLE_PATH), sizeof(char));
-
-	strcpy(style_path, ETC_STYLE_PATH);
+	char *style_path = strdup(ETC_STYLE_PATH);
 
 	struct stat s;
-	if(stat(style_path, &s) == -1)
-		goto null;
-
-	if(S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
-		return style_path;
-	}
+	if(stat(style_path, &s) == -1) goto null;
+	if(S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) return style_path;
 
 null:
 	free(style_path);
