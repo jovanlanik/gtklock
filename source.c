@@ -8,6 +8,7 @@
 #include "auth.h"
 #include "window.h"
 #include "gtklock.h"
+#include "config.h"
 #include "module.h"
 #include "xdg.h"
 
@@ -19,16 +20,25 @@ static gboolean no_input_inhibit = FALSE;
 
 static char *gtk_theme = NULL;
 
+static char *config_path = NULL;
 static char *style_path = NULL;
 static char *module_path = NULL;
 
-static GOptionEntry entries[] = {
+static GOptionEntry main_entries[] = {
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
-	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL },
-	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL },
+	{ "config", 'c', 0, G_OPTION_ARG_FILENAME, &config_path, "Load config file", NULL },
+	{ NULL },
+};
+
+static GOptionEntry config_entries[] = {
 	{ "gtk-theme", 'g', 0, G_OPTION_ARG_STRING, &gtk_theme, "Set GTK theme", NULL },
 	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style_path, "Load CSS style file", NULL },
 	{ "module", 'm', 0, G_OPTION_ARG_FILENAME, &module_path, "Load gtklock module", NULL },
+};
+
+static GOptionEntry debug_entries[] = {
+	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL },
+	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL },
 	{ NULL },
 };
 
@@ -146,12 +156,25 @@ static void daemonize(void) {
 int main(int argc, char **argv) {
 	GError *error = NULL;
 	GOptionContext *option_context = g_option_context_new("- GTK-based lockscreen for sway");
-	g_option_context_add_main_entries(option_context, entries, NULL);
+	g_option_context_add_main_entries(option_context, main_entries, NULL);
 	g_option_context_set_help_enabled(option_context, FALSE);
 	g_option_context_set_ignore_unknown_options(option_context, TRUE);
 	g_option_context_parse(option_context, &argc, &argv, &error);
 
+	if(config_path == NULL) config_path = xdg_get_config_path("config.ini");
+	if(config_path) config_load(config_path, config_entries);
+	
 	if(should_daemonize) daemonize();
+
+	GOptionGroup *config_group =
+		g_option_group_new("config", "Config options", "Show options available in the config", NULL, NULL);
+	GOptionGroup *debug_group =
+		g_option_group_new("debug", "Debug options", "Show options for debugging and styling", NULL, NULL);
+
+	g_option_group_add_entries(config_group, config_entries);
+	g_option_group_add_entries(debug_group, debug_entries);
+	g_option_context_add_group(option_context, config_group);
+	g_option_context_add_group(option_context, debug_group);
 
 	g_option_context_add_group(option_context, gtk_get_option_group(TRUE));
 	g_option_context_set_help_enabled(option_context, TRUE);
