@@ -13,23 +13,26 @@
 
 struct GtkLock *gtklock = NULL;
 
-static char *style_path = NULL;
-static char *module_path = NULL;
-
 static gboolean should_daemonize = FALSE;
 static gboolean no_layer_shell = FALSE;
 static gboolean no_input_inhibit = FALSE;
 
-static pid_t parent = -2;
+static char *gtk_theme = NULL;
+
+static char *style_path = NULL;
+static char *module_path = NULL;
 
 static GOptionEntry entries[] = {
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
 	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL },
 	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL },
-	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style_path, "CSS style to use", NULL },
-	{ "module", 'm', 0, G_OPTION_ARG_FILENAME, &module_path, "gtklock module to use", NULL },
+	{ "gtk-theme", 'g', 0, G_OPTION_ARG_STRING, &gtk_theme, "Set GTK theme", NULL },
+	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style_path, "Load CSS style file", NULL },
+	{ "module", 'm', 0, G_OPTION_ARG_FILENAME, &module_path, "Load gtklock module", NULL },
 	{ NULL },
 };
+
+static pid_t parent = -2;
 
 static void reload_outputs(void) {
 	GdkDisplay *display = gdk_display_get_default();
@@ -155,6 +158,11 @@ int main(int argc, char **argv) {
 	g_option_context_set_ignore_unknown_options(option_context, FALSE);
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
 		g_error("Option parsing failed: %s\n", error->message);
+
+	if(gtk_theme) {
+		GtkSettings *settings = gtk_settings_get_default();
+		g_object_set(settings, "gtk-theme-name", gtk_theme, NULL);
+	}
 
 	gtklock = create_gtklock();
 	gtklock->use_layer_shell = !no_layer_shell;
