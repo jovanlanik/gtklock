@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <sys/wait.h>
 #include <gtk/gtk.h>
+#include <glib/gprintf.h>
 
 #include "auth.h"
 #include "window.h"
@@ -23,6 +24,7 @@ static char *gtk_theme = NULL;
 static char *config_path = NULL;
 static char *style_path = NULL;
 static char *module_path = NULL;
+static char *background_path = NULL;
 
 static GOptionEntry main_entries[] = {
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
@@ -34,6 +36,7 @@ static GOptionEntry config_entries[] = {
 	{ "gtk-theme", 'g', 0, G_OPTION_ARG_STRING, &gtk_theme, "Set GTK theme", NULL },
 	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style_path, "Load CSS style file", NULL },
 	{ "module", 'm', 0, G_OPTION_ARG_FILENAME, &module_path, "Load gtklock module", NULL },
+	{ "background", 'b', 0, G_OPTION_ARG_FILENAME, &background_path, "Load background", NULL },
 };
 
 static GOptionEntry debug_entries[] = {
@@ -114,17 +117,39 @@ static void activate(GtkApplication *app, gpointer user_data) {
 	if(parent > 0) kill(parent, SIGINT);
 }
 
-static void attach_custom_style(const char* path) {
+static void attach_style(const char *format, ...) G_GNUC_PRINTF(1, 2);
+static void attach_style(const char *format, ...) {
 	GtkCssProvider *provider = gtk_css_provider_new();
 	GError *err = NULL;
+	va_list args;
+	va_start(args, format);
+	char *buff = g_strdup_vprintf(format, args);
+	va_end(args);
 
-	gtk_css_provider_load_from_path(provider, path, &err);
+	gtk_css_provider_load_from_data(provider, buff, -1, &err);
 	if(err != NULL) {
 		g_warning("Style loading failed: %s", err->message);
 		g_error_free(err);
 	} else {
 		gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
 			GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+	}
+
+	g_object_unref(provider);
+	g_free(buff);
+}
+
+static void attach_custom_style(const char *path) {
+	GtkCssProvider *provider = gtk_css_provider_new();
+	GError *err = NULL;
+
+	gtk_css_provider_load_from_path(provider, path, &err);
+	if(err != NULL) {
+		g_warning("Custom style loading failed: %s", err->message);
+		g_error_free(err);
+	} else {
+		gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
+			GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION+1);
 	}
 	g_object_unref(provider);
 }
@@ -191,8 +216,22 @@ int main(int argc, char **argv) {
 	gtklock->use_layer_shell = !no_layer_shell;
 	gtklock->use_input_inhibit = !no_input_inhibit;
 
+	if(background_path != NULL) {
+		GFile *file = g_file_new_for_path(background_path);
+		char *path = g_file_get_path(file);
+		g_object_unref(file);
+		attach_style(
+			"window { "
+			"background-color: black;"
+			"background-image: url(\"%s\");"
+			"background-size: 100%% 100%%;"
+			"}",
+			path
+		);
+	}
+
 	if(style_path == NULL) style_path = xdg_get_config_path("style.css");
-	if(style_path) {
+	if(style_path != NULL) {
 		attach_custom_style(style_path);
 		free(style_path);
 	}
