@@ -49,10 +49,12 @@ void gtklock_focus_window(struct GtkLock *gtklock, struct Window* win) {
 }
 
 void gtklock_update_clocks(struct GtkLock *gtklock) {
-	time_t now = time(&now);
-	struct tm *now_tm = localtime(&now);
-	if(now_tm == NULL) return;
-	snprintf(gtklock->time, 8, "%02d:%02d", now_tm->tm_hour, now_tm->tm_min);
+	GDateTime *time = g_date_time_new_now_local();
+	if(time == NULL) return;
+	if(gtklock->time) g_free(gtklock->time);
+	gtklock->time = g_date_time_format(time, gtklock->time_format ? gtklock->time_format : "%R");
+	g_date_time_unref(time);
+
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
 		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
 		window_update_clock(ctx);
@@ -76,7 +78,7 @@ struct GtkLock* create_gtklock(void) {
 }
 
 void gtklock_activate(struct GtkLock *gtklock) {
-	gtklock->draw_clock_source = g_timeout_add_seconds(5, gtklock_update_clocks_handler, gtklock);
+	gtklock->draw_clock_source = g_timeout_add_seconds(1, gtklock_update_clocks_handler, gtklock);
 	gtklock_update_clocks(gtklock);
 	if(gtklock->use_input_inhibit) input_inhibitor_get();
 }

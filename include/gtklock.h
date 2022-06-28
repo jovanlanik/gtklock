@@ -20,7 +20,8 @@ struct GtkLock {
 
 	gboolean use_layer_shell;
 	gboolean use_input_inhibit;
-	char time[8];
+	char *time;
+	char *time_format;
 };
 
 extern struct GtkLock *gtklock;

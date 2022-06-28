@@ -25,6 +25,7 @@ static char *config_path = NULL;
 static char *style_path = NULL;
 static char *module_path = NULL;
 static char *background_path = NULL;
+static char *time_format = NULL;
 
 static GOptionEntry main_entries[] = {
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
@@ -37,6 +38,7 @@ static GOptionEntry config_entries[] = {
 	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style_path, "Load CSS style file", NULL },
 	{ "module", 'm', 0, G_OPTION_ARG_FILENAME, &module_path, "Load gtklock module", NULL },
 	{ "background", 'b', 0, G_OPTION_ARG_FILENAME, &background_path, "Load background", NULL },
+	{ "time-format", 't', 0, G_OPTION_ARG_STRING, &time_format, "Set time format", NULL },
 };
 
 static GOptionEntry debug_entries[] = {
@@ -238,6 +240,8 @@ int main(int argc, char **argv) {
 
 	GModule *module = NULL;
 	if(module_path != NULL) module = module_load(module_path);
+
+	gtklock->time_format = time_format;
 
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
