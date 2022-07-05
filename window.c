@@ -303,7 +303,15 @@ static void window_set_focus(struct Window *win, struct Window *old) {
 	assert(win != NULL);
 	window_setup(win);
 
+	GtkStyleContext *win_context = gtk_widget_get_style_context(win->window);
+	gtk_style_context_remove_class(win_context, "not-focused");
+	gtk_style_context_add_class(win_context, "focused");
+
 	if(old != NULL && old != win) {
+		GtkStyleContext *old_context = gtk_widget_get_style_context(old->window);
+		gtk_style_context_remove_class(old_context, "focused");
+		gtk_style_context_add_class(old_context, "not-focused");
+
 		if(old->input_field != NULL && win->input_field != NULL) {
 			// Get previous cursor position
 			gint cursor_pos = 0;
@@ -344,11 +352,15 @@ struct Window *create_window(GdkMonitor *monitor) {
 	g_array_append_val(gtklock->windows, w);
 
 	w->window = gtk_application_window_new(gtklock->app);
+	GtkStyleContext *context = gtk_widget_get_style_context(w->window);
+	gtk_style_context_add_class(context, "not-focused");
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
 
-	// This code uses a deprecated function and assumes one GDK screen...
-	// However there isn't really a good way to do this in GTK3 currently.
-	// Related issue: https://gitlab.gnome.org/GNOME/gtk/-/issues/4982
+	/*
+		This code uses a deprecated function and assumes one GDK screen...
+		However there isn't really a good way to do this in GTK3 currently.
+		Related issue: https://gitlab.gnome.org/GNOME/gtk/-/issues/4982
+	*/
 	char *name = NULL;
 	GdkDisplay *display = gtk_widget_get_display(w->window);
 	GdkScreen *screen = gtk_widget_get_screen(w->window);
