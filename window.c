@@ -44,11 +44,7 @@ static void window_setup_layer_shell(struct Window *ctx) {
 }
 
 void window_update_clock(struct Window *ctx) {
-	char time[48];
-	int size = 96000;
-	if(gtklock->focused_window == NULL || ctx == gtklock->focused_window) size = 32000;
-	g_snprintf(time, 48, "<span size='%d'>%s</span>", size, gtklock->time);
-	gtk_label_set_markup((GtkLabel*)ctx->clock_label, time);
+	gtk_label_set_text((GtkLabel*)ctx->clock_label, gtklock->time);
 }
 
 static void window_empty(struct Window *ctx) {

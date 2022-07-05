@@ -232,6 +232,15 @@ int main(int argc, char **argv) {
 		);
 	}
 
+	attach_style(
+		"window.focused #clock-label {"
+		"font-size: 32pt;"
+		"}"
+		"window.not-focused #clock-label {"
+		"font-size: 96pt;"
+		"}"
+	);
+
 	if(style_path == NULL) style_path = xdg_get_config_path("style.css");
 	if(style_path != NULL) {
 		attach_custom_style(style_path);
