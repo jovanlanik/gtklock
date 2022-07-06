@@ -28,7 +28,7 @@ static char *background_path = NULL;
 static char *time_format = NULL;
 
 static GOptionEntry main_entries[] = {
-	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from the controlling terminal after locking", NULL },
+	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from controlling terminal", NULL },
 	{ "config", 'c', 0, G_OPTION_ARG_FILENAME, &config_path, "Load config file", NULL },
 	{ NULL },
 };
