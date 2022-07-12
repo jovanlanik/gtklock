@@ -233,11 +233,11 @@ int main(int argc, char **argv) {
 	}
 
 	attach_style(
+		"window #clock-label {"
+		"font-size: 96pt;"
+		"}"
 		"window.focused #clock-label {"
 		"font-size: 32pt;"
-		"}"
-		"window.not-focused #clock-label {"
-		"font-size: 96pt;"
 		"}"
 	);
 
