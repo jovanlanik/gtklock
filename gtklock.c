@@ -78,7 +78,7 @@ struct GtkLock* create_gtklock(void) {
 }
 
 void gtklock_activate(struct GtkLock *gtklock) {
-	gtklock->draw_clock_source = g_timeout_add_seconds(1, gtklock_update_clocks_handler, gtklock);
+	gtklock->draw_clock_source = g_timeout_add(1000, gtklock_update_clocks_handler, gtklock);
 	gtklock_update_clocks(gtklock);
 	if(gtklock->use_input_inhibit) input_inhibitor_get();
 }
