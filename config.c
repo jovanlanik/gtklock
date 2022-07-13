@@ -9,6 +9,7 @@ void config_load(char *path, GOptionEntry entries[]) {
 	GKeyFile *keyfile = g_key_file_new();
 	g_key_file_load_from_file(keyfile, path, G_KEY_FILE_NONE, NULL);
 	for(int i = 0; entries[i].long_name != NULL; ++i) {
+		if(!g_key_file_has_key(keyfile, "main", entries[i].long_name, NULL)) continue;
 		switch(entries[i].arg) {
 			case G_OPTION_ARG_NONE:
 				*(gboolean *)entries[i].arg_data =
