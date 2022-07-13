@@ -14,6 +14,10 @@ void config_load(char *path, GOptionEntry entries[]) {
 				*(gboolean *)entries[i].arg_data =
 					g_key_file_get_boolean(keyfile, "main", entries[i].long_name, NULL);
 				break;
+			case G_OPTION_ARG_INT:
+				*(gboolean *)entries[i].arg_data =
+					g_key_file_get_integer(keyfile, "main", entries[i].long_name, NULL);
+				break;
 			case G_OPTION_ARG_STRING:
 			case G_OPTION_ARG_FILENAME:
 				*(gchar **)entries[i].arg_data =
