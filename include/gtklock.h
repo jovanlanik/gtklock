@@ -17,9 +17,14 @@ struct GtkLock {
 
 	struct Window *focused_window;
 	guint draw_clock_source;
+	guint idle_hide_source;
+	gboolean idle_hidden;
+	guint idle_timeout;
 
 	gboolean use_layer_shell;
 	gboolean use_input_inhibit;
+	gboolean use_idle_hide;
+
 	char *time;
 	char *time_format;
 };
@@ -31,6 +36,8 @@ struct Window *gtklock_window_by_monitor(struct GtkLock *gtklock, GdkMonitor *mo
 void gtklock_remove_window(struct GtkLock *gtklock, struct Window *win);
 void gtklock_focus_window(struct GtkLock *gtklock, struct Window *win);
 void gtklock_update_clocks(struct GtkLock *gtklock);
+void gtklock_idle_hide(struct GtkLock *gtklock);
+void gtklock_idle_show(struct GtkLock *gtklock);
 struct GtkLock *create_gtklock(void);
 void gtklock_activate(struct GtkLock *gtklock);
 void gtklock_destroy(struct GtkLock *gtklock);

@@ -18,6 +18,10 @@ struct GtkLock *gtklock = NULL;
 static gboolean should_daemonize = FALSE;
 static gboolean no_layer_shell = FALSE;
 static gboolean no_input_inhibit = FALSE;
+static gboolean idle_hide = FALSE;
+static gboolean start_hidden = FALSE;
+
+static gint idle_timeout = 15;
 
 static char *gtk_theme = NULL;
 
@@ -39,6 +43,9 @@ static GOptionEntry config_entries[] = {
 	{ "module", 'm', 0, G_OPTION_ARG_FILENAME, &module_path, "Load gtklock module", NULL },
 	{ "background", 'b', 0, G_OPTION_ARG_FILENAME, &background_path, "Load background", NULL },
 	{ "time-format", 't', 0, G_OPTION_ARG_STRING, &time_format, "Set time format", NULL },
+	{ "idle-hide", 'H', 0, G_OPTION_ARG_NONE, &idle_hide, "Hide form when idle", NULL },
+	{ "idle-timeout", 'T', 0, G_OPTION_ARG_INT, &idle_timeout, "Idle timeout in seconds", NULL },
+	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
 };
 
 static GOptionEntry debug_entries[] = {
@@ -217,6 +224,9 @@ int main(int argc, char **argv) {
 	gtklock = create_gtklock();
 	gtklock->use_layer_shell = !no_layer_shell;
 	gtklock->use_input_inhibit = !no_input_inhibit;
+	gtklock->use_idle_hide = idle_hide;
+	gtklock->idle_timeout = (guint)idle_timeout;
+	if(gtklock->use_idle_hide) gtklock->idle_hidden = start_hidden;
 
 	if(background_path != NULL) {
 		GFile *file = g_file_new_for_path(background_path);
@@ -236,7 +246,7 @@ int main(int argc, char **argv) {
 		"window #clock-label {"
 		"font-size: 96pt;"
 		"}"
-		"window.focused #clock-label {"
+		"window.focused:not(.hidden) #clock-label {"
 		"font-size: 32pt;"
 		"}"
 	);
