@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
 	gtklock->use_input_inhibit = !no_input_inhibit;
 	gtklock->use_idle_hide = idle_hide;
 	gtklock->idle_timeout = (guint)idle_timeout;
-	if(gtklock->use_idle_hide) gtklock->idle_hidden = start_hidden;
+	gtklock->hidden = start_hidden;
 
 	if(background_path != NULL) {
 		GFile *file = g_file_new_for_path(background_path);

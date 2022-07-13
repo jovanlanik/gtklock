@@ -74,22 +74,21 @@ static int gtklock_idle_handler(gpointer data) {
 }
 
 void gtklock_idle_hide(struct GtkLock *gtklock) {
-	if(!gtklock->use_idle_hide || gtklock->idle_hidden || g_application_get_is_busy(G_APPLICATION(gtklock->app)))
+	if(!gtklock->use_idle_hide || gtklock->hidden || g_application_get_is_busy(G_APPLICATION(gtklock->app)))
 		return;
-	gtklock->idle_hidden = TRUE;
+	gtklock->hidden = TRUE;
 	if(gtklock->focused_window) window_configure(gtklock->focused_window);
 }
 
 void gtklock_idle_show(struct GtkLock *gtklock) {
-	if(!gtklock->use_idle_hide) return;
-
-	if(gtklock->idle_hide_source > 0) g_source_remove(gtklock->idle_hide_source);
-	gtklock->idle_hide_source = g_timeout_add_seconds(gtklock->idle_timeout, gtklock_idle_handler, gtklock);
-
-	if(gtklock->idle_hidden) {
-		gtklock->idle_hidden = FALSE;
+	if(gtklock->hidden) {
+		gtklock->hidden = FALSE;
 		if(gtklock->focused_window) window_configure(gtklock->focused_window);
 	}
+
+	if(!gtklock->use_idle_hide) return;
+	if(gtklock->idle_hide_source > 0) g_source_remove(gtklock->idle_hide_source);
+	gtklock->idle_hide_source = g_timeout_add_seconds(gtklock->idle_timeout, gtklock_idle_handler, gtklock);
 }
 
 struct GtkLock* create_gtklock(void) {

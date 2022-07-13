@@ -16,10 +16,11 @@ struct GtkLock {
 	GArray *errors;
 
 	struct Window *focused_window;
+	gboolean hidden;
+	guint idle_timeout;
+
 	guint draw_clock_source;
 	guint idle_hide_source;
-	gboolean idle_hidden;
-	guint idle_timeout;
 
 	gboolean use_layer_shell;
 	gboolean use_input_inhibit;

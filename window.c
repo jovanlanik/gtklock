@@ -263,11 +263,11 @@ static void window_setup(struct Window *ctx) {
 	}
 
 	GtkStyleContext *context = gtk_widget_get_style_context(ctx->window);
-	if(gtklock->idle_hidden) gtk_style_context_add_class(context, "hidden");
+	if(gtklock->hidden) gtk_style_context_add_class(context, "hidden");
 	else gtk_style_context_remove_class(context, "hidden");
 
 	// Update input area if necessary
-	if((gtklock->focused_window == ctx && !gtklock->idle_hidden) || gtklock->focused_window == NULL) {
+	if((gtklock->focused_window == ctx && !gtklock->hidden) || gtklock->focused_window == NULL) {
 		if(ctx->body == NULL) {
 			ctx->body = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 			gtk_widget_set_halign(ctx->body, GTK_ALIGN_CENTER);
@@ -361,7 +361,7 @@ struct Window *create_window(GdkMonitor *monitor) {
 
 	w->window = gtk_application_window_new(gtklock->app);
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
-	if(gtklock->use_idle_hide) {
+	if(gtklock->use_idle_hide || gtklock->hidden) {
 		g_signal_connect(w->window, "key-press-event", G_CALLBACK(window_idle_key), NULL);
 		g_signal_connect(w->window, "motion-notify-event", G_CALLBACK(window_idle_motion), NULL);
 	}
