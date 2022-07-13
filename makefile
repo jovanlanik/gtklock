@@ -15,11 +15,11 @@ LDLIBS += $(shell pkg-config --libs $(LIBS))
 SRC = $(wildcard *.c) 
 OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o $(SRC:%.c=%.o)
 
-TRASH = $(OBJ) $(NAME) $(wildcard *-client-protocol.c) $(wildcard include/*-client-protocol.h)
+TRASH = $(OBJ) $(NAME) $(NAME).1 $(wildcard *-client-protocol.c) $(wildcard include/*-client-protocol.h)
 
 .PHONY: all clean install install-bin install-data uninstall
 
-all: $(NAME)
+all: $(NAME) $(NAME).1
 
 clean:
 	@rm $(TRASH) | true
@@ -31,12 +31,15 @@ install-bin:
 install-data:
 	$(INSTALL) -d $(DESTDIR)/etc/pam.d
 	$(INSTALL) -m644 pam/$(NAME) $(DESTDIR)/etc/pam.d/$(NAME)
+	$(INSTALL) -d $(DESTDIR)$(PREFIX)/share/man/man1
+	$(INSTALL) -m644 $(NAME).1 $(DESTDIR)$(PREFIX)/share/man/man1/$(NAME).1
 
 install: install-bin install-data
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(NAME)
 	rm -f $(DESTDIR)/etc/pam.d/$(NAME)
+	rm -r $(DESTDIR)$(PREFIX)/share/man/man1/$(NAME).1
 
 $(NAME): $(OBJ)
 
@@ -47,3 +50,6 @@ include/%-client-protocol.h: wayland/%.xml
 	wayland-scanner client-header $< $@
 
 input-inhibitor.c: include/wlr-input-inhibitor-unstable-v1-client-protocol.h 
+
+%.1: %.1.scd
+	scdoc < $< > $@

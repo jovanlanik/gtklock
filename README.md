@@ -20,6 +20,7 @@ $ make
 ### Dependencies
 - GNU Make (build-time)
 - pkg-config (build-time)
+- scdoc (build-time)
 - PAM
 - wayland-client
 - gtk+3.0
