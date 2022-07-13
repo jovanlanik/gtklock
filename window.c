@@ -300,13 +300,11 @@ static void window_set_focus(struct Window *win, struct Window *old) {
 	window_setup(win);
 
 	GtkStyleContext *win_context = gtk_widget_get_style_context(win->window);
-	gtk_style_context_remove_class(win_context, "not-focused");
 	gtk_style_context_add_class(win_context, "focused");
 
 	if(old != NULL && old != win) {
 		GtkStyleContext *old_context = gtk_widget_get_style_context(old->window);
 		gtk_style_context_remove_class(old_context, "focused");
-		gtk_style_context_add_class(old_context, "not-focused");
 
 		if(old->input_field != NULL && win->input_field != NULL) {
 			// Get previous cursor position
@@ -348,8 +346,6 @@ struct Window *create_window(GdkMonitor *monitor) {
 	g_array_append_val(gtklock->windows, w);
 
 	w->window = gtk_application_window_new(gtklock->app);
-	GtkStyleContext *context = gtk_widget_get_style_context(w->window);
-	gtk_style_context_add_class(context, "not-focused");
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
 
 	/*
