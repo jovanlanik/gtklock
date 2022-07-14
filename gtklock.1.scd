@@ -79,6 +79,8 @@ window {
 ```
 
 # AUTHORS
-	Maintained by Jovan Lanik <jox969@gmail.com>, who is assisted by other
-	contributors. For more information about gtklock development,
-	see <https://github.com/jovanlanik/gtklock>.
+
+Maintained by Jovan Lanik <jox969@gmail.com>, who is assisted by other
+contributors. For more information about gtklock development,
+see <https://github.com/jovanlanik/gtklock>.
+
