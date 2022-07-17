@@ -51,5 +51,5 @@ include/%-client-protocol.h: wayland/%.xml
 
 input-inhibitor.c: include/wlr-input-inhibitor-unstable-v1-client-protocol.h 
 
-%.1: %.1.scd
+%.1: man/%.1.scd
 	scdoc < $< > $@
