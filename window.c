@@ -47,6 +47,20 @@ void window_update_clock(struct Window *ctx) {
 	gtk_label_set_text((GtkLabel*)ctx->clock_label, gtklock->time);
 }
 
+static void window_body_empty(struct Window *ctx) {
+	if(ctx->body != NULL) {
+		gtk_widget_destroy(ctx->body);
+		ctx->body = NULL;
+	}
+	ctx->input_box = NULL;
+	ctx->input_label = NULL;
+	ctx->input_field = NULL;
+	ctx->message_box = NULL;
+	ctx->unlock_button = NULL;
+	ctx->error_label = NULL;
+	module_on_body_empty(gtklock, ctx);
+}
+
 static void window_empty(struct Window *ctx) {
 	if(ctx->window_box != NULL) {
 		gtk_widget_destroy(ctx->window_box);
@@ -55,12 +69,7 @@ static void window_empty(struct Window *ctx) {
 
 	ctx->clock_label = NULL;
 	ctx->body = NULL;
-	ctx->input_box = NULL;
-	ctx->input_label = NULL;
-	ctx->input_field = NULL;
-	ctx->message_box = NULL;
-	ctx->unlock_button = NULL;
-	ctx->error_label = NULL;
+	window_body_empty(ctx);
 	module_on_window_empty(gtklock, ctx);
 }
 
@@ -274,23 +283,13 @@ static void window_setup(struct Window *ctx) {
 			gtk_widget_set_name(ctx->body, "body");
 			gtk_widget_set_size_request(ctx->body, 384, -1);
 			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->body);
-			window_update_clock(ctx);
+			//window_update_clock(ctx);
 			window_setup_input(ctx);
 			window_setup_messages(ctx);
 		}
 	}
-	else if(ctx->body != NULL) {
-		gtk_widget_destroy(ctx->body);
-		ctx->body = NULL;
-		ctx->input_box = NULL;
-		ctx->input_label = NULL;
-		ctx->input_field = NULL;
-		ctx->message_box = NULL;
-		ctx->unlock_button = NULL;
-		ctx->error_label = NULL;
-		module_on_body_empty(gtklock, ctx);
-		window_update_clock(ctx);
-	}
+	else if(ctx->body != NULL) window_body_empty(ctx);
+	window_update_clock(ctx);
 }
 
 static void window_destroy_notify(GtkWidget *widget, gpointer data) {

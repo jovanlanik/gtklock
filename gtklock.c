@@ -78,12 +78,14 @@ void gtklock_idle_hide(struct GtkLock *gtklock) {
 		return;
 	gtklock->hidden = TRUE;
 	if(gtklock->focused_window) window_configure(gtklock->focused_window);
+	module_on_idle_hide(gtklock);
 }
 
 void gtklock_idle_show(struct GtkLock *gtklock) {
 	if(gtklock->hidden) {
 		gtklock->hidden = FALSE;
 		if(gtklock->focused_window) window_configure(gtklock->focused_window);
+		module_on_idle_show(gtklock);
 	}
 
 	if(!gtklock->use_idle_hide) return;
