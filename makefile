@@ -12,11 +12,12 @@ LIBS := pam wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-no-export-
 CFLAGS += -std=c11 -Iinclude $(shell pkg-config --cflags $(LIBS))
 LDLIBS += $(shell pkg-config --libs $(LIBS))
 
-SRC = $(wildcard *.c) 
-OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o $(SRC:%.c=%.o)
+SRC = $(wildcard src/*.c) 
+OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o $(SRC:src/%.c=%.o)
 
 TRASH = $(OBJ) $(NAME) $(NAME).1 $(wildcard *-client-protocol.c) $(wildcard include/*-client-protocol.h)
 
+VPATH = src
 .PHONY: all clean install install-bin install-data uninstall
 
 all: $(NAME) $(NAME).1
@@ -49,7 +50,7 @@ $(NAME): $(OBJ)
 include/%-client-protocol.h: wayland/%.xml
 	wayland-scanner client-header $< $@
 
-input-inhibitor.c: include/wlr-input-inhibitor-unstable-v1-client-protocol.h 
+src/input-inhibitor.c: include/wlr-input-inhibitor-unstable-v1-client-protocol.h 
 
 %.1: man/%.1.scd
 	scdoc < $< > $@
