@@ -1,7 +1,10 @@
 // gtklock
 // Copyright (c) 2022 Kenny Levinsen, Jovan Lanik
 
+#define _POSIX_C_SOURCE
+
 #include <assert.h>
+#include <signal.h>
 #include <sys/wait.h>
 #include <gtk/gtk.h>
 #include <glib/gprintf.h>
