@@ -70,15 +70,13 @@ static int conversation(
 }
 
 static void auth_child(const char *s) {
-	struct passwd pwd;
-	struct passwd *result = NULL;
-	size_t len = sysconf(_SC_GETPW_R_SIZE_MAX);
-	char *buf = malloc(len);
+	struct passwd *pwd = NULL;
 
-	getpwuid_r(getuid(), &pwd, buf, len, &result);
-	if(result == NULL) g_error("getpwuid() failed");
+	errno = 0;
+	pwd = getpwuid(getuid());
+	if(pwd == NULL) g_error("getpwuid() failed");
 
-	char *username = pwd.pw_name;
+	char *username = pwd->pw_name;
 	int pam_status;
 	struct pam_handle *handle;
 	struct pam_conv conv = { conversation, (void *)s };
