@@ -44,7 +44,7 @@ static void window_setup_layer_shell(struct Window *ctx) {
 }
 
 void window_update_clock(struct Window *ctx) {
-	gtk_label_set_text((GtkLabel*)ctx->clock_label, gtklock->time);
+	gtk_label_set_text(GTK_LABEL(ctx->clock_label), gtklock->time);
 }
 
 static void window_body_empty(struct Window *ctx) {
@@ -82,7 +82,7 @@ static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) 
 		char *err = g_array_index(gtklock->errors, char *, idx);
 		if(err == data) {
 			g_array_remove_index_fast(gtklock->errors, idx);
-			free(err);
+			g_free(err);
 			window_setup_messages(ctx);
 			return;
 		}
@@ -91,7 +91,7 @@ static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) 
 		char *msg = g_array_index(gtklock->messages, char *, idx);
 		if(msg == data) {
 			g_array_remove_index_fast(gtklock->messages, idx);
-			free(msg);
+			g_free(msg);
 			window_setup_messages(ctx);
 			return;
 		}
@@ -283,7 +283,6 @@ static void window_setup(struct Window *ctx) {
 			gtk_widget_set_name(ctx->body, "body");
 			gtk_widget_set_size_request(ctx->body, 384, -1);
 			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->body);
-			//window_update_clock(ctx);
 			window_setup_input(ctx);
 			window_setup_messages(ctx);
 		}
