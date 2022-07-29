@@ -28,6 +28,7 @@ struct GtkLock {
 
 	char *time;
 	char *time_format;
+	char *config_path;
 };
 
 extern struct GtkLock *gtklock;

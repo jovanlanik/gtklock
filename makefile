@@ -10,7 +10,7 @@ INSTALL ?= install
 
 LIBS := pam wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-no-export-2.0
 CFLAGS += -std=c11 -Iinclude $(shell pkg-config --cflags $(LIBS))
-LDLIBS += $(shell pkg-config --libs $(LIBS))
+LDLIBS += -Wl,--export-dynamic $(shell pkg-config --libs $(LIBS))
 
 SRC = $(wildcard src/*.c) 
 OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o $(SRC:src/%.c=%.o)

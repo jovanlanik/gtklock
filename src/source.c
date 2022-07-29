@@ -199,7 +199,7 @@ int main(int argc, char **argv) {
 	g_option_context_parse(option_context, &argc, &argv, &error);
 
 	if(config_path == NULL) config_path = xdg_get_config_path("config.ini");
-	if(config_path) config_load(config_path, config_entries);
+	if(config_path) config_load(config_path, "main", config_entries);
 	
 	if(should_daemonize) daemonize();
 
@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
 		char *path = g_file_get_path(file);
 		g_object_unref(file);
 		attach_style(
-			"window { "
+			"window {"
 			"background-color: black;"
 			"background-image: url(\"%s\");"
 			"background-size: 100%% 100%%;"
@@ -264,6 +264,7 @@ int main(int argc, char **argv) {
 	if(module_path != NULL) module = module_load(module_path);
 
 	gtklock->time_format = time_format;
+	gtklock->config_path = config_path;
 
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);

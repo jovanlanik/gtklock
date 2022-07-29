@@ -7,5 +7,5 @@
 
 #include "glib.h"
 
-void config_load(char *path, GOptionEntry entries[]);
+void config_load(const char *path, const char *group, GOptionEntry entries[]);
 
