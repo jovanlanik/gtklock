@@ -15,7 +15,14 @@ static void (*on_idle_show)(struct GtkLock *gtklock) = NULL;
 
 GModule *module_load(const char *name) {
 	if(g_module_supported() == FALSE) return NULL;
-	GModule *module = g_module_open(name, 0);
+
+	GError *err = NULL;
+	GModule *module = g_module_open_full(name, 0, &err);
+	if(module == NULL) {
+		g_warning("Module loading failed: %s", err->message);
+		g_error_free(err);
+		return NULL;
+	}
 
 	g_module_symbol(module, "on_activation", (gpointer *)&on_activation);
 	g_module_symbol(module, "on_output_change", (gpointer *)&on_output_change);
