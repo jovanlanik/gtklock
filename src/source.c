@@ -30,7 +30,7 @@ static char *gtk_theme = NULL;
 
 static char *config_path = NULL;
 static char *style_path = NULL;
-static char *module_path = NULL;
+static char **module_path = NULL;
 static char *background_path = NULL;
 static char *time_format = NULL;
 
@@ -43,7 +43,7 @@ static GOptionEntry main_entries[] = {
 static GOptionEntry config_entries[] = {
 	{ "gtk-theme", 'g', 0, G_OPTION_ARG_STRING, &gtk_theme, "Set GTK theme", NULL },
 	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style_path, "Load CSS style file", NULL },
-	{ "module", 'm', 0, G_OPTION_ARG_FILENAME, &module_path, "Load gtklock module", NULL },
+	{ "modules", 'm', 0, G_OPTION_ARG_FILENAME_ARRAY, &module_path, "Load gtklock modules", NULL },
 	{ "background", 'b', 0, G_OPTION_ARG_FILENAME, &background_path, "Load background", NULL },
 	{ "time-format", 't', 0, G_OPTION_ARG_STRING, &time_format, "Set time format", NULL },
 	{ "idle-hide", 'H', 0, G_OPTION_ARG_NONE, &idle_hide, "Hide form when idle", NULL },
@@ -260,8 +260,13 @@ int main(int argc, char **argv) {
 		free(style_path);
 	}
 
-	GModule *module = NULL;
-	if(module_path != NULL) module = module_load(module_path);
+	gtklock->modules = g_array_new(FALSE, TRUE, sizeof(GModule *));
+	if(module_path) {
+		for(int i = 0; module_path[i] != NULL; ++i) {
+			GModule *module = module_load(module_path[i]);
+			if(module) g_array_append_val(gtklock->modules, module);
+		}
+	}
 
 	gtklock->time_format = time_format;
 	gtklock->config_path = config_path;
@@ -269,7 +274,11 @@ int main(int argc, char **argv) {
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
 
-	if(module != NULL) g_module_close(module);
+	for(int idx = 0; idx < gtklock->modules->len; idx++) {
+		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
+		g_module_close(module);
+	}
+
 	gtklock_destroy(gtklock);
 	return status;
 }

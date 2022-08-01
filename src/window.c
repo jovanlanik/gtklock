@@ -352,7 +352,7 @@ static gboolean window_idle_motion(GtkWidget *self, GdkEventMotion event, gpoint
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 struct Window *create_window(GdkMonitor *monitor) {
-	struct Window *w = calloc(1, sizeof(struct Window));
+	struct Window *w = calloc(1, sizeof(struct Window) + gtklock->modules->len * sizeof(void *));
 	if(w == NULL) g_error("Failed to allocate Window instance");
 	w->monitor = monitor;
 	g_array_append_val(gtklock->windows, w);

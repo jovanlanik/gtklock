@@ -24,6 +24,11 @@ void config_load(const char *path, const char *group, GOptionEntry entries[]) {
 				*(gchar **)entries[i].arg_data =
 					g_key_file_get_string(keyfile, group, entries[i].long_name, NULL);
 				break;
+			case G_OPTION_ARG_STRING_ARRAY:
+			case G_OPTION_ARG_FILENAME_ARRAY:
+				*(gchar ***)entries[i].arg_data =
+					g_key_file_get_string_list(keyfile, group, entries[i].long_name, NULL, NULL);
+				break;
 			default:
 				g_error("Unknown entry argument type");
 		}

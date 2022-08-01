@@ -23,7 +23,7 @@ struct Window {
 
 	gulong enter_notify_handler;
 
-	void *module_data;
+	void *module_data[];
 };
 
 struct Window *create_window(GdkMonitor *monitor);
