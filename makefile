@@ -4,12 +4,12 @@
 # Makefile
 
 NAME := gtklock
-PREFIX ?= /usr/local
 
+PREFIX ?= /usr/local
 INSTALL ?= install
 
 LIBS := pam wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-no-export-2.0
-CFLAGS += -std=c11 -Iinclude $(shell pkg-config --cflags $(LIBS))
+CFLAGS += -std=c11 -DPREFIX=$(PREFIX) -Iinclude $(shell pkg-config --cflags $(LIBS))
 LDLIBS += -Wl,--export-dynamic $(shell pkg-config --libs $(LIBS))
 
 SRC = $(wildcard src/*.c) 

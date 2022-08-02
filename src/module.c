@@ -5,11 +5,30 @@
 
 #include "module.h"
 
+#ifndef PREFIX
+#warning PREFIX not defined.
+#define PREFIX /usr/local
+#endif
+#define _STR(x) #x
+#define STR(x) _STR(x)
+#define LIB_PATH STR(PREFIX/lib)
+
 GModule *module_load(const char *name) {
 	if(g_module_supported() == FALSE) return NULL;
+	
+	char *path = g_path_get_basename(name);
+	if(g_strcmp0(name, path) != 0) path = g_strdup(name);
+	else {
+		if(g_file_test(name, G_FILE_TEST_IS_REGULAR)) path = g_strdup(name);
+		else {
+			g_free(path);
+			path = g_build_path("/", LIB_PATH, name, NULL);
+		}
+	}
 
 	GError *err = NULL;
-	GModule *module = g_module_open_full(name, 0, &err);
+	GModule *module = g_module_open_full(path, 0, &err);
+	g_free(path);
 	if(module == NULL) {
 		g_warning("Module loading failed: %s", err->message);
 		g_error_free(err);

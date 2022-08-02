@@ -39,8 +39,11 @@ All available options are:
 *-s, --style* <path>
 	Load CSS style file.
 
-*-m, --module* <path>
-	Load gtklock module.
+*-m, --modules* <name>
+	Load gtklock modules. Module name can be an absolute path, relative path
+	(starting with ./ or ../) or name in system directory (such as
+	example-module.so for /usr/lib/gtklock/example-module.so). The .so suffix
+	can be ommited.
 
 *-b, --background* <path>
 	Load background. Specified background can be overwritten by CSS.
