@@ -11,7 +11,6 @@
 #endif
 #define _STR(x) #x
 #define STR(x) _STR(x)
-#define LIB_PATH STR(PREFIX/lib)
 
 GModule *module_load(const char *name) {
 	if(g_module_supported() == FALSE) return NULL;
@@ -22,7 +21,7 @@ GModule *module_load(const char *name) {
 		if(g_file_test(name, G_FILE_TEST_IS_REGULAR)) path = g_strdup(name);
 		else {
 			g_free(path);
-			path = g_build_path("/", LIB_PATH, name, NULL);
+			path = g_build_path("/", STR(PREFIX)"/lib/gtklock", name, NULL);
 		}
 	}
 
