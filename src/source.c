@@ -258,12 +258,12 @@ int main(int argc, char **argv) {
 	if(style_path == NULL) style_path = xdg_get_config_path("style.css");
 	if(style_path != NULL) {
 		attach_custom_style(style_path);
-		free(style_path);
+		g_free(style_path);
 	}
 
 	gtklock->modules = g_array_new(FALSE, TRUE, sizeof(GModule *));
 	if(module_path) {
-		for(int i = 0; module_path[i] != NULL; ++i) {
+		for(guint i = 0; module_path[i] != NULL; ++i) {
 			GModule *module = module_load(module_path[i]);
 			if(module) g_array_append_val(gtklock->modules, module);
 		}
@@ -275,7 +275,7 @@ int main(int argc, char **argv) {
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
 
-	for(int idx = 0; idx < gtklock->modules->len; idx++) {
+	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
 		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
 		g_module_close(module);
 	}

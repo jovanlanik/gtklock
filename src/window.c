@@ -14,6 +14,8 @@
 #include "auth.h"
 #include "module.h"
 
+extern struct GtkLock *gtklock;
+
 static void window_set_focus_layer_shell(struct Window *win, struct Window *old) {
 	if(old != NULL) gtk_layer_set_keyboard_mode(GTK_WINDOW(old->window), GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
 	gtk_layer_set_keyboard_mode(GTK_WINDOW(win->window), GTK_LAYER_SHELL_KEYBOARD_MODE_EXCLUSIVE);
@@ -352,12 +354,13 @@ static gboolean window_idle_motion(GtkWidget *self, GdkEventMotion event, gpoint
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 struct Window *create_window(GdkMonitor *monitor) {
-	struct Window *w = calloc(1, sizeof(struct Window) + gtklock->modules->len * sizeof(void *));
-	if(w == NULL) g_error("Failed to allocate Window instance");
-	w->monitor = monitor;
-	g_array_append_val(gtklock->windows, w);
+	struct Window *w = g_malloc0(sizeof(struct Window) + gtklock->modules->len * sizeof(void *));
+	if(!w) g_error("Failed allocation");
 
+	g_array_append_val(gtklock->windows, w);
+	w->monitor = monitor;
 	w->window = gtk_application_window_new(gtklock->app);
+
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
 	if(gtklock->use_idle_hide || gtklock->hidden) {
 		g_signal_connect(w->window, "key-press-event", G_CALLBACK(window_idle_key), NULL);

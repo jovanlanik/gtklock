@@ -31,7 +31,7 @@ void gtklock_remove_window(struct GtkLock *gtklock, struct Window *win) {
 		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
 		if(ctx == win) {
 			g_array_remove_index_fast(gtklock->windows, idx);
-			free(ctx);
+			g_free(ctx);
 			return;
 		}
 	}
@@ -94,7 +94,8 @@ void gtklock_idle_show(struct GtkLock *gtklock) {
 }
 
 struct GtkLock* create_gtklock(void) {
-	gtklock = calloc(1, sizeof(struct GtkLock));
+	struct GtkLock *gtklock = g_malloc0(sizeof(struct GtkLock));
+	if(!gtklock) g_error("Failed allocation");
 	gtklock->app = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
 	g_application_hold(G_APPLICATION(gtklock->app));
 	gtklock->windows = g_array_new(FALSE, TRUE, sizeof(struct Window *));
@@ -121,6 +122,6 @@ void gtklock_destroy(struct GtkLock *gtklock) {
 	}
 
 	if(gtklock->use_input_inhibit) input_inhibitor_destroy();
-	free(gtklock);
+	g_free(gtklock);
 }
 
