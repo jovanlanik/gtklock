@@ -74,19 +74,25 @@ static void auth_child(const char *s) {
 
 	errno = 0;
 	pwd = getpwuid(getuid());
-	if(pwd == NULL) g_error("getpwuid() failed");
+	if(pwd == NULL) {
+		perror("getpwnam");
+		exit(EXIT_FAILURE);
+	}
 
 	char *username = pwd->pw_name;
 	int pam_status;
 	struct pam_handle *handle;
 	struct pam_conv conv = { conversation, (void *)s };
 	pam_status = pam_start("gtklock", username, &conv, &handle);
-	if(pam_status != PAM_SUCCESS) g_error("pam_start() failed");
+	if(pam_status != PAM_SUCCESS) {
+		fprintf(stderr, "pam_start() failed");
+		exit(EXIT_FAILURE);
+	}
 
 	int ret = pam_authenticate((pam_handle_t *)handle, 0);
 	pam_status = ret;
 	pam_status = pam_setcred((pam_handle_t *)handle, PAM_REFRESH_CRED);
-	if(pam_end(handle, pam_status) != PAM_SUCCESS) g_warning("pam_end() failed");
+	if(pam_end(handle, pam_status) != PAM_SUCCESS) fprintf(stderr, "pam_end() failed");
 	if(ret == PAM_SUCCESS) exit(EXIT_SUCCESS);
 	exit(EXIT_FAILURE);
 }
