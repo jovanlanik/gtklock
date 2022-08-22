@@ -36,7 +36,7 @@ void config_load(const char *path, const char *group, GOptionEntry entries[]) {
 						g_key_file_get_string_list(keyfile, group, entries[i].long_name, NULL, NULL);
 					break;
 				default:
-					g_error("Unknown entry argument type");
+					g_warning("Unknown entry argument type");
 			}
 		}
 	}

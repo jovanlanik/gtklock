@@ -5,6 +5,7 @@
 
 #include <gdk/gdkwayland.h>
 
+#include "util.h"
 #include "wlr-input-inhibitor-unstable-v1-client-protocol.h"
 
 static struct wl_display *display = NULL;
@@ -46,11 +47,11 @@ void input_inhibitor_get(void) {
 	wl_display_roundtrip(display);
 
 	if(!input_inhibit_manager_global)
-		g_error("Your compositor doesn't support wlr-input-inhibitor");
+		report_error_and_exit("Your compositor doesn't support wlr-input-inhibitor");
 	
 	zwlr_input_inhibit_manager_v1_get_inhibitor(input_inhibit_manager_global);
 	if(wl_display_roundtrip(display) == -1 && input_inhibit_manager_global)
-		g_error("Failed to inhibit input. Is another lockscreen already running?");
+		report_error_and_exit("Failed to inhibit input. Is another lockscreen already running?");
 }
 
 void input_inhibitor_destroy(void) {

@@ -9,6 +9,7 @@
 #include <gtk/gtk.h>
 #include <gtk-layer-shell.h>
 
+#include "util.h"
 #include "window.h"
 #include "gtklock.h"
 #include "auth.h"
@@ -355,7 +356,7 @@ static gboolean window_idle_motion(GtkWidget *self, GdkEventMotion event, gpoint
 
 struct Window *create_window(GdkMonitor *monitor) {
 	struct Window *w = g_malloc0(sizeof(struct Window) + gtklock->modules->len * sizeof(void *));
-	if(!w) g_error("Failed allocation");
+	if(!w) report_error_and_exit("Failed allocation");
 
 	g_array_append_val(gtklock->windows, w);
 	w->monitor = monitor;

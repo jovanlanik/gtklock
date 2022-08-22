@@ -5,6 +5,7 @@
 
 #include <gtk/gtk.h>
 
+#include "util.h"
 #include "window.h"
 #include "gtklock.h"
 #include "module.h"
@@ -95,7 +96,7 @@ void gtklock_idle_show(struct GtkLock *gtklock) {
 
 struct GtkLock* create_gtklock(void) {
 	struct GtkLock *gtklock = g_malloc0(sizeof(struct GtkLock));
-	if(!gtklock) g_error("Failed allocation");
+	if(!gtklock) report_error_and_exit("Failed allocation");
 	gtklock->app = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
 	g_application_hold(G_APPLICATION(gtklock->app));
 	gtklock->windows = g_array_new(FALSE, TRUE, sizeof(struct Window *));

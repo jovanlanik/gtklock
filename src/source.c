@@ -9,6 +9,7 @@
 #include <gtk/gtk.h>
 #include <glib/gprintf.h>
 
+#include "util.h"
 #include "auth.h"
 #include "window.h"
 #include "gtklock.h"
@@ -170,7 +171,7 @@ static void attach_custom_style(const char *path) {
 static void daemonize(void) {
 	parent = getpid();
 	pid_t pid = fork();
-	if(pid == -1) g_error("Failed to daemonize!\n");
+	if(pid == -1) report_error_and_exit("Failed to daemonize!\n");
 	else if(pid != 0) {
 		int status;
 		waitpid(pid, &status, 0);
@@ -178,7 +179,7 @@ static void daemonize(void) {
 			g_usleep(G_USEC_PER_SEC);
 			exit(0);
 		}
-		g_error("Failed to daemonize!\n");
+		report_error_and_exit("Failed to daemonize!\n");
 	}
 
 	freopen("/dev/null", "r", stdin);
@@ -218,7 +219,7 @@ int main(int argc, char **argv) {
 	g_option_context_set_help_enabled(option_context, TRUE);
 	g_option_context_set_ignore_unknown_options(option_context, FALSE);
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
-		g_error("Option parsing failed: %s\n", error->message);
+		report_error_and_exit("Option parsing failed: %s\n", error->message);
 
 	if(gtk_theme) {
 		GtkSettings *settings = gtk_settings_get_default();
