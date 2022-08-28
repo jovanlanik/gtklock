@@ -231,6 +231,7 @@ static void window_setup_input(struct Window *ctx) {
 	gtk_grid_attach(GTK_GRID(ctx->input_box), ctx->input_label, 0, 0, 1, 1);
 
 	ctx->input_field = gtk_entry_new();
+	gtk_widget_set_name(ctx->input_field, "input-field");
 	gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
 	g_object_set(ctx->input_field, "caps-lock-warning", FALSE, NULL);
 	window_pw_set_vis((GtkEntry*)ctx->input_field, FALSE);
@@ -248,6 +249,7 @@ static void window_setup_input(struct Window *ctx) {
 	gtk_container_add(GTK_CONTAINER(button_box), ctx->error_label);
 
 	ctx->unlock_button = gtk_button_new_with_label("Unlock");
+	gtk_widget_set_name(ctx->unlock_button, "unlock-button");
 	GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(ctx->unlock_button);
 	g_signal_connect(ctx->unlock_button, "clicked", G_CALLBACK(window_pw_check), ctx);
 	gtk_style_context_add_class(unlock_button_style, "suggested-action");
