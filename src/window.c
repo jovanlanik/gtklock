@@ -155,7 +155,7 @@ static gboolean window_pw_failure(gpointer data) {
 	window_set_busy(ctx, FALSE);
 	gtk_entry_set_text(GTK_ENTRY(ctx->input_field), "");
 	gtk_widget_grab_focus(ctx->input_field);
-	gtk_label_set_markup(GTK_LABEL(ctx->error_label), "<span color=\"red\">Login failed</span>");
+	gtk_label_set_text(GTK_LABEL(ctx->error_label), "Login failed");
 	return G_SOURCE_REMOVE;
 }
 

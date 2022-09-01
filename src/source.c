@@ -254,6 +254,9 @@ int main(int argc, char **argv) {
 		"window.focused:not(.hidden) #clock-label {"
 		"font-size: 32pt;"
 		"}"
+		"#error-label {"
+		"color: red;"
+		"}"
 	);
 
 	if(style_path == NULL) style_path = xdg_get_config_path("style.css");
