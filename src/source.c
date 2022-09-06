@@ -17,8 +17,16 @@
 #include "module.h"
 #include "xdg.h"
 
+#ifndef VERSION
+#warning VERSION not defined.
+#define VERSION unknown
+#endif
+#define _STR(x) #x
+#define STR(x) _STR(x)
+
 struct GtkLock *gtklock = NULL;
 
+static gboolean version = FALSE;
 static gboolean should_daemonize = FALSE;
 static gboolean no_layer_shell = FALSE;
 static gboolean no_input_inhibit = FALSE;
@@ -36,8 +44,9 @@ static char *background_path = NULL;
 static char *time_format = NULL;
 
 static GOptionEntry main_entries[] = {
-	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from controlling terminal", NULL },
+	{ "version", 'v', 0, G_OPTION_ARG_NONE, &version, "Show version", NULL },
 	{ "config", 'c', 0, G_OPTION_ARG_FILENAME, &config_path, "Load config file", NULL },
+	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from controlling terminal", NULL },
 	{ NULL },
 };
 
@@ -220,6 +229,11 @@ int main(int argc, char **argv) {
 	g_option_context_set_ignore_unknown_options(option_context, FALSE);
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
 		report_error_and_exit("Option parsing failed: %s\n", error->message);
+
+	if(version) {
+		g_print("gtklock %s\n", STR(VERSION));
+		return 0;
+	}
 
 	if(gtk_theme) {
 		GtkSettings *settings = gtk_settings_get_default();
