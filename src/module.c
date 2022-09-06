@@ -9,6 +9,12 @@
 #warning PREFIX not defined.
 #define PREFIX /usr/local
 #endif
+
+#ifndef VERSION
+#warning VERSION not defined.
+#define VERSION unknown
+#endif
+
 #define _STR(x) #x
 #define STR(x) _STR(x)
 
@@ -33,6 +39,13 @@ GModule *module_load(const char *name) {
 		g_error_free(err);
 		return NULL;
 	}
+
+	gchar *module_version = NULL;
+	if(g_module_symbol(module, "module_version", (gpointer *)&module_version)) {
+		if(g_strcmp0(STR(VERSION), module_version) != 0)
+			g_warning("%s: module has mismatched version, may be incompatible", name);
+	} else g_warning("%s: module has no version info, may be incompatible", name);
+
 	return module;
 }
 

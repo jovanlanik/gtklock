@@ -21,6 +21,7 @@
 #warning VERSION not defined.
 #define VERSION unknown
 #endif
+
 #define _STR(x) #x
 #define STR(x) _STR(x)
 
