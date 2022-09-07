@@ -19,6 +19,7 @@ struct Window {
 	GtkWidget *message_box;
 	GtkWidget *unlock_button;
 	GtkWidget *error_label;
+	GtkWidget *warning_label;
 	GtkWidget *clock_label;
 
 	gulong enter_notify_handler;

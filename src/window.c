@@ -61,6 +61,7 @@ static void window_body_empty(struct Window *ctx) {
 	ctx->message_box = NULL;
 	ctx->unlock_button = NULL;
 	ctx->error_label = NULL;
+	ctx->warning_label = NULL;
 	module_on_body_empty(gtklock, ctx);
 }
 
@@ -232,7 +233,7 @@ static void window_setup_input(struct Window *ctx) {
 
 	ctx->input_field = gtk_entry_new();
 	gtk_widget_set_name(ctx->input_field, "input-field");
-	gtk_entry_set_input_purpose((GtkEntry*)ctx->input_field, GTK_INPUT_PURPOSE_PASSWORD);
+	gtk_entry_set_input_purpose(GTK_ENTRY(ctx->input_field), GTK_INPUT_PURPOSE_PASSWORD);
 	g_object_set(ctx->input_field, "caps-lock-warning", FALSE, NULL);
 	window_pw_set_vis((GtkEntry*)ctx->input_field, FALSE);
 	g_signal_connect(ctx->input_field, "icon-release", G_CALLBACK(window_pw_toggle_vis), NULL);
@@ -243,6 +244,10 @@ static void window_setup_input(struct Window *ctx) {
 	GtkWidget *button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 	gtk_widget_set_halign(button_box, GTK_ALIGN_END);
 	gtk_grid_attach(GTK_GRID(ctx->input_box), button_box, 1, 2, 2, 1);
+
+	ctx->warning_label = gtk_label_new(NULL);
+	gtk_widget_set_name(ctx->warning_label, "warning-label");
+	gtk_container_add(GTK_CONTAINER(button_box), ctx->warning_label);
 
 	ctx->error_label = gtk_label_new(NULL);
 	gtk_widget_set_name(ctx->error_label, "error-label");
@@ -354,6 +359,15 @@ static gboolean window_idle_motion(GtkWidget *self, GdkEventMotion event, gpoint
 	return FALSE;
 }
 
+void window_caps_state_changed(GdkKeymap *self, gpointer user_data) {
+	struct Window *w = user_data;
+	if(!w->warning_label) return;
+	if(gdk_keymap_get_caps_lock_state(self))
+		gtk_label_set_text(GTK_LABEL(w->warning_label), "Caps Lock is on");
+	else
+		gtk_label_set_text(GTK_LABEL(w->warning_label), "");
+}
+
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 struct Window *create_window(GdkMonitor *monitor) {
@@ -370,19 +384,23 @@ struct Window *create_window(GdkMonitor *monitor) {
 		g_signal_connect(w->window, "motion-notify-event", G_CALLBACK(window_idle_motion), NULL);
 	}
 
+	GdkDisplay *display = gtk_widget_get_display(w->window);
+
 	/*
 		This code uses a deprecated function and assumes one GDK screen...
 		However there isn't really a good way to do this in GTK3 currently.
 		Related issue: https://gitlab.gnome.org/GNOME/gtk/-/issues/4982
 	*/
 	char *name = NULL;
-	GdkDisplay *display = gtk_widget_get_display(w->window);
 	GdkScreen *screen = gtk_widget_get_screen(w->window);
 	for(int i = 0; i < gdk_display_get_n_monitors(display); i++) {
 		GdkMonitor *monitor = gdk_display_get_monitor(display, i);
 		if(monitor != w->monitor) continue;
 		name = gdk_screen_get_monitor_plug_name(screen, i);
 	}
+
+	GdkKeymap *keymap = gdk_keymap_get_for_display(display);
+	g_signal_connect(keymap, "state-changed", G_CALLBACK(window_caps_state_changed), w);
 
 	if(name) gtk_widget_set_name(w->window, name);
 	gtk_window_set_title(GTK_WINDOW(w->window), "Lockscreen");
