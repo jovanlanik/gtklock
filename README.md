@@ -25,3 +25,9 @@ $ make
 - wayland-client
 - gtk+3.0
 - gtk-layer-shell
+### Install dependencies
+- Arch: `pacman -S gcc make pkgconf scdoc pam wayland gtk3 gtk-layer-shell`
+- Fedora: `dnf install gcc make pkgconf scdoc pam-devel wayland-devel gtk3-devel gtk-layer-shell-devel`
+- Void: `xbps-install gcc make pkgconf scdoc pam-devel wayland-devel gtk+3-devel gtk-layer-shell-devel`
+
+❤️ __Please submit an installation command for your distro!__
