@@ -88,9 +88,9 @@ static void reload_outputs(void) {
 		struct Window *w = gtklock_window_by_monitor(gtklock, monitor);
 		if(w != NULL) {
 			// We already have this monitor, remove from dead_windows list
-			for(guint ydx = 0; ydx < dead_windows->len; ydx++) {
-				if(w == g_array_index(dead_windows, struct Window*, ydx)) {
-					g_array_remove_index_fast(dead_windows, ydx);
+			for(guint idx = 0; idx < dead_windows->len; idx++) {
+				if(w == g_array_index(dead_windows, struct Window*, idx)) {
+					g_array_remove_index_fast(dead_windows, idx);
 					break;
 				}
 			}
