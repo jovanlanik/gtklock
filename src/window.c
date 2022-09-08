@@ -354,12 +354,18 @@ static gboolean window_idle_motion(GtkWidget *self, GdkEventMotion event, gpoint
 }
 
 void window_caps_state_changed(GdkKeymap *self, gpointer user_data) {
-	struct Window *w = user_data;
-	if(!w->warning_label) return;
+	struct Window *w = NULL;
+	if(gtklock->focused_window == NULL) {
+		if(!gtklock->use_layer_shell) w = g_array_index(gtklock->windows, struct Window *, 0);
+	} else w = gtklock->focused_window;
+
+	if(!w || !w->warning_label) return;
+
 	if(gdk_keymap_get_caps_lock_state(self))
 		gtk_label_set_text(GTK_LABEL(w->warning_label), "Caps Lock is on");
 	else
 		gtk_label_set_text(GTK_LABEL(w->warning_label), "");
+	gtk_widget_show(w->warning_label);
 }
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -394,7 +400,7 @@ struct Window *create_window(GdkMonitor *monitor) {
 	}
 
 	GdkKeymap *keymap = gdk_keymap_get_for_display(display);
-	g_signal_connect(keymap, "state-changed", G_CALLBACK(window_caps_state_changed), w);
+	g_signal_connect(keymap, "state-changed", G_CALLBACK(window_caps_state_changed), NULL);
 
 	if(name) gtk_widget_set_name(w->window, name);
 	gtk_window_set_title(GTK_WINDOW(w->window), "Lockscreen");
