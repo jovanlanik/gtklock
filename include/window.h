@@ -11,9 +11,9 @@ struct Window {
 	GdkMonitor *monitor;
 
 	GtkWidget *window;
+	GtkWidget *overlay;
 	GtkWidget *window_box;
-	GtkWidget *body;
-	GtkWidget *input_box;
+	GtkWidget *body_grid;
 	GtkWidget *input_label;
 	GtkWidget *input_field;
 	GtkWidget *message_box;
