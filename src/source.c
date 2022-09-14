@@ -206,14 +206,6 @@ int main(int argc, char **argv) {
 	GError *error = NULL;
 	GOptionContext *option_context = g_option_context_new("- GTK-based lockscreen for sway");
 	g_option_context_add_main_entries(option_context, main_entries, NULL);
-	g_option_context_set_help_enabled(option_context, FALSE);
-	g_option_context_set_ignore_unknown_options(option_context, TRUE);
-	g_option_context_parse(option_context, &argc, &argv, &error);
-
-	if(config_path == NULL) config_path = xdg_get_config_path("config.ini");
-	if(config_path) config_load(config_path, "main", config_entries);
-	
-	if(should_daemonize) daemonize();
 
 	GOptionGroup *config_group =
 		g_option_group_new("config", "Config options", "Show options available in the config", NULL, NULL);
@@ -226,6 +218,38 @@ int main(int argc, char **argv) {
 	g_option_context_add_group(option_context, debug_group);
 
 	g_option_context_add_group(option_context, gtk_get_option_group(TRUE));
+
+	g_option_context_set_help_enabled(option_context, FALSE);
+	g_option_context_set_ignore_unknown_options(option_context, TRUE);
+	g_option_context_parse(option_context, &argc, &argv, &error);
+
+	if(should_daemonize) daemonize();
+
+	if(config_path == NULL) config_path = xdg_get_config_path("config.ini");
+	if(config_path) config_load(config_path, "main", config_entries);
+
+	GArray *modules = g_array_new(FALSE, TRUE, sizeof(GModule *));
+	if(module_path) {
+		for(guint i = 0; module_path[i] != NULL; ++i) {
+			GModule *module = module_load(module_path[i]);
+			if(!module) continue;
+			g_array_append_val(modules, module);
+
+			gchar *module_name = NULL;
+			GOptionEntry *module_entries = NULL;
+			gboolean has_name = g_module_symbol(module, "module_name", (gpointer *)&module_name);
+			gboolean has_entries = g_module_symbol(module, "module_entries", (gpointer *)&module_entries);
+			if(has_name && has_entries) {
+				GOptionGroup *module_group =
+					g_option_group_new(module_name, module_name, "Show module options", NULL, NULL);
+				g_option_group_add_entries(module_group, module_entries);
+				g_option_context_add_group(option_context, module_group);
+
+				config_load(config_path, module_name, module_entries);
+			}
+		}
+	}
+
 	g_option_context_set_help_enabled(option_context, TRUE);
 	g_option_context_set_ignore_unknown_options(option_context, FALSE);
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
@@ -280,13 +304,7 @@ int main(int argc, char **argv) {
 		g_free(style_path);
 	}
 
-	gtklock->modules = g_array_new(FALSE, TRUE, sizeof(GModule *));
-	if(module_path) {
-		for(guint i = 0; module_path[i] != NULL; ++i) {
-			GModule *module = module_load(module_path[i]);
-			if(module) g_array_append_val(gtklock->modules, module);
-		}
-	}
+	gtklock->modules = modules;
 
 	gtklock->time_format = time_format;
 	gtklock->config_path = config_path;
@@ -294,8 +312,8 @@ int main(int argc, char **argv) {
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
 
-	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
-		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
+	for(guint idx = 0; idx < modules->len; idx++) {
+		GModule *module = g_array_index(modules, GModule *, idx);
 		g_module_close(module);
 	}
 
