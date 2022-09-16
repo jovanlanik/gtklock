@@ -14,6 +14,12 @@
 
 #include "auth.h"
 
+struct conv_data {
+	const char *pw;
+	int *err;
+	int *out;
+};
+
 static char *error_string = NULL;
 static char *message_string = NULL;
 
@@ -40,7 +46,7 @@ static int conversation(
 	struct pam_response **resp,
 	void *appdata_ptr
 ) {
-	const char *password = appdata_ptr;
+	struct conv_data *data = appdata_ptr;
 	*resp = calloc(num_msg, sizeof(struct pam_response));
 	if(*resp == NULL) {
 		g_warning("Failed allocation");
@@ -52,24 +58,24 @@ static int conversation(
 		switch(msg[i]->msg_style) {
 			case PAM_PROMPT_ECHO_OFF:
 			case PAM_PROMPT_ECHO_ON:
-				resp[i]->resp = strdup(password);
+				resp[i]->resp = strdup(data->pw);
 				if(resp[i]->resp == NULL) {
 					g_warning("Failed allocation");
 					return PAM_ABORT;
 				}
 				break;
 			case PAM_ERROR_MSG:
-				send_msg(msg[i]->msg, STDERR_FILENO);
+				send_msg(msg[i]->msg, data->err[1]);
 				break;
 			case PAM_TEXT_INFO:
-				send_msg(msg[i]->msg, STDOUT_FILENO);
+				send_msg(msg[i]->msg, data->out[1]);
 				break;
 		}
 	}
 	return PAM_SUCCESS;
 }
 
-static void auth_child(const char *s) {
+static void auth_child(const char *s, int *err, int *out) {
 	struct passwd *pwd = NULL;
 
 	errno = 0;
@@ -82,7 +88,8 @@ static void auth_child(const char *s) {
 	char *username = pwd->pw_name;
 	int pam_status;
 	struct pam_handle *handle;
-	struct pam_conv conv = { conversation, (void *)s };
+	struct conv_data data = { .pw = s, .err = err, .out = out };
+	struct pam_conv conv = { conversation, (void *)&data };
 	pam_status = pam_start("gtklock", username, &conv, &handle);
 	if(pam_status != PAM_SUCCESS) {
 		fprintf(stderr, "pam_start() failed");
@@ -123,11 +130,8 @@ enum pwcheck auth_pw_check(const char *s) {
 		else if(pid == 0) {
 			close(err_pipe[0]);
 			close(out_pipe[0]);
-			dup2(err_pipe[1], STDERR_FILENO);
-			dup2(out_pipe[1], STDOUT_FILENO);
 			freopen("/dev/null", "r", stdin);
-			auth_child(s);
-			exit(EXIT_FAILURE);
+			auth_child(s, err_pipe, out_pipe);
 		}
 		close(err_pipe[1]);
 		close(out_pipe[1]);
