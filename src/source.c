@@ -133,11 +133,11 @@ static gboolean setup_layer_shell(void) {
 
 static void activate(GtkApplication *app, gpointer user_data) {
 	gtklock_activate(gtklock);
+	module_on_activation(gtklock);
 	if(!setup_layer_shell()) {
 		struct Window *win = create_window(NULL);
 		gtklock_focus_window(gtklock, win);
 	}
-	module_on_activation(gtklock);
 	if(parent > 0) kill(parent, SIGINT);
 }
 
