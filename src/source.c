@@ -7,7 +7,6 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <gtk/gtk.h>
-#include <glib/gprintf.h>
 
 #include "util.h"
 #include "auth.h"
@@ -27,7 +26,7 @@
 
 struct GtkLock *gtklock = NULL;
 
-static gboolean version = FALSE;
+static gboolean show_version = FALSE;
 static gboolean should_daemonize = FALSE;
 static gboolean no_layer_shell = FALSE;
 static gboolean no_input_inhibit = FALSE;
@@ -45,7 +44,7 @@ static char *background_path = NULL;
 static char *time_format = NULL;
 
 static GOptionEntry main_entries[] = {
-	{ "version", 'v', 0, G_OPTION_ARG_NONE, &version, "Show version", NULL },
+	{ "version", 'v', 0, G_OPTION_ARG_NONE, &show_version, "Show version", NULL },
 	{ "config", 'c', 0, G_OPTION_ARG_FILENAME, &config_path, "Load config file", NULL },
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from controlling terminal", NULL },
 	{ NULL },
@@ -255,7 +254,7 @@ int main(int argc, char **argv) {
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
 		report_error_and_exit("Option parsing failed: %s\n", error->message);
 
-	if(version) {
+	if(show_version) {
 		g_print("gtklock %s\n", STR(VERSION));
 		return 0;
 	}
