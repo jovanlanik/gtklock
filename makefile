@@ -22,7 +22,7 @@ TRASH = $(OBJ) $(NAME) $(NAME).1 $(wildcard *-client-protocol.c) $(wildcard incl
 VPATH = src
 .PHONY: all clean install install-bin install-data uninstall
 
-all: $(NAME) $(NAME).1
+all: $(NAME)
 
 clean:
 	@rm $(TRASH) | true
@@ -45,6 +45,7 @@ uninstall:
 	rm -r $(DESTDIR)$(PREFIX)/share/man/man1/$(NAME).1
 
 $(NAME): $(OBJ)
+	$(LINK.c) $(LDLIBS) $^ -o $@
 
 %-client-protocol.c: wayland/%.xml
 	wayland-scanner private-code $< $@
