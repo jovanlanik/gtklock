@@ -97,7 +97,7 @@ void gtklock_idle_show(struct GtkLock *gtklock) {
 struct GtkLock* create_gtklock(void) {
 	struct GtkLock *gtklock = g_malloc0(sizeof(struct GtkLock));
 	if(!gtklock) report_error_and_exit("Failed allocation");
-	gtklock->app = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
+	gtklock->app = gtk_application_new(NULL, G_APPLICATION_DEFAULT_FLAGS);
 	if(gtklock->use_layer_shell) g_application_hold(G_APPLICATION(gtklock->app));
 	gtklock->windows = g_array_new(FALSE, TRUE, sizeof(struct Window *));
 	gtklock->messages = g_array_new(FALSE, TRUE, sizeof(char *));
