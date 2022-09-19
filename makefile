@@ -45,7 +45,7 @@ uninstall:
 	rm -r $(DESTDIR)$(PREFIX)/share/man/man1/$(NAME).1
 
 $(NAME): $(OBJ)
-	$(LINK.c) $(LDLIBS) $^ -o $@
+	$(LINK.c) $^ $(LDLIBS) -o $@
 
 %-client-protocol.c: wayland/%.xml
 	wayland-scanner private-code $< $@
