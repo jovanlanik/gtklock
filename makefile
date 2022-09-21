@@ -5,8 +5,8 @@
 
 NAME := gtklock
 
-PREFIX ?= /usr/local
-INSTALL ?= install
+PREFIX = /usr/local
+INSTALL = install
 
 include util/version.mk
 
