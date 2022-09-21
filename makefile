@@ -22,7 +22,7 @@ TRASH = $(OBJ) $(NAME) $(NAME).1 $(wildcard *-client-protocol.c) $(wildcard incl
 VPATH = src
 .PHONY: all clean install install-bin install-data uninstall
 
-all: $(NAME)
+all: $(NAME) $(NAME).1
 
 clean:
 	@rm $(TRASH) | true
