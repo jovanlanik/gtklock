@@ -94,10 +94,16 @@ void gtklock_idle_show(struct GtkLock *gtklock) {
 	gtklock->idle_hide_source = g_timeout_add_seconds(gtklock->idle_timeout, gtklock_idle_handler, gtklock);
 }
 
+#if GLIB_CHECK_VERSION(2, 74, 0)
+	#define GTKLOCK_FLAGS G_APPLICATION_DEFAULT_FLAGS
+#else
+	#define GTKLOCK_FLAGS G_APPLICATION_FLAGS_NONE
+#endif
+
 struct GtkLock* create_gtklock(void) {
 	struct GtkLock *gtklock = g_malloc0(sizeof(struct GtkLock));
 	if(!gtklock) report_error_and_exit("Failed allocation");
-	gtklock->app = gtk_application_new(NULL, G_APPLICATION_DEFAULT_FLAGS);
+	gtklock->app = gtk_application_new(NULL, GTKLOCK_FLAGS);
 	if(gtklock->use_layer_shell) g_application_hold(G_APPLICATION(gtklock->app));
 	gtklock->windows = g_array_new(FALSE, TRUE, sizeof(struct Window *));
 	gtklock->messages = g_array_new(FALSE, TRUE, sizeof(char *));
