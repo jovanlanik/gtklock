@@ -3,7 +3,7 @@
 
 # Version
 
-VERSION := v1.3.7
+VERSION := v1.3.8
 command := $(shell command -v git)
 ifdef command
 	git := $(shell git rev-parse --is-inside-work-tree 2>&1 >/dev/null)
