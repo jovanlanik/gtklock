@@ -140,6 +140,14 @@ static void activate(GtkApplication *app, gpointer user_data) {
 	if(parent > 0) kill(parent, SIGINT);
 }
 
+static void shutdown(GtkApplication *app, gpointer user_data) {
+	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
+		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
+		g_module_close(module);
+	}
+	gtklock_shutdown(gtklock);
+}
+
 static void attach_style(const char *format, ...) G_GNUC_PRINTF(1, 2);
 static void attach_style(const char *format, ...) {
 	GtkCssProvider *provider = gtk_css_provider_new();
@@ -309,12 +317,8 @@ int main(int argc, char **argv) {
 	gtklock->config_path = config_path;
 
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
+	g_signal_connect(gtklock->app, "shutdown", G_CALLBACK(shutdown), NULL);
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
-
-	for(guint idx = 0; idx < modules->len; idx++) {
-		GModule *module = g_array_index(modules, GModule *, idx);
-		g_module_close(module);
-	}
 
 	gtklock_destroy(gtklock);
 	return status;

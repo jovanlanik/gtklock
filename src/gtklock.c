@@ -119,16 +119,21 @@ void gtklock_activate(struct GtkLock *gtklock) {
 	if(gtklock->use_input_inhibit) input_inhibitor_get();
 }
 
-void gtklock_destroy(struct GtkLock *gtklock) {
-	g_object_unref(gtklock->app);
-	g_array_unref(gtklock->windows);
-
+void gtklock_shutdown(struct GtkLock *gtklock) {
 	if(gtklock->draw_clock_source > 0) {
 		g_source_remove(gtklock->draw_clock_source);
 		gtklock->draw_clock_source = 0;
 	}
-
+	if(gtklock->idle_hide_source > 0) {
+		g_source_remove(gtklock->idle_hide_source);
+		gtklock->idle_hide_source = 0;
+	}
 	if(gtklock->use_input_inhibit) input_inhibitor_destroy();
+}
+
+void gtklock_destroy(struct GtkLock *gtklock) {
+	g_object_unref(gtklock->app);
+	g_array_unref(gtklock->windows);
 	g_free(gtklock);
 }
 

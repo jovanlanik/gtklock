@@ -42,5 +42,6 @@ void gtklock_idle_hide(struct GtkLock *gtklock);
 void gtklock_idle_show(struct GtkLock *gtklock);
 struct GtkLock *create_gtklock(void);
 void gtklock_activate(struct GtkLock *gtklock);
+void gtklock_shutdown(struct GtkLock *gtklock);
 void gtklock_destroy(struct GtkLock *gtklock);
 

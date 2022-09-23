@@ -56,6 +56,7 @@ void input_inhibitor_get(void) {
 
 void input_inhibitor_destroy(void) {
 	zwlr_input_inhibit_manager_v1_destroy(input_inhibit_manager_global);
+	wl_display_roundtrip(display);
 }
 
 /*
