@@ -3,6 +3,7 @@
 
 // Module support
 
+#include "util.h"
 #include "module.h"
 
 #ifndef PREFIX
@@ -10,9 +11,17 @@
 #define PREFIX /usr/local
 #endif
 
-#ifndef VERSION
-#warning VERSION not defined.
-#define VERSION unknown
+#ifndef MAJOR_VERSION
+#warning MAJOR_VERSION not defined.
+#define MAJOR_VERSION 0
+#endif
+#ifndef MINOR_VERSION
+#warning MINOR_VERSION not defined.
+#define MINOR_VERSION 0
+#endif
+#ifndef MICRO_VERSION
+#warning MICRO_VERSION not defined.
+#define MICRO_VERSION 0
 #endif
 
 #define _STR(x) #x
@@ -40,11 +49,22 @@ GModule *module_load(const char *name) {
 		return NULL;
 	}
 
-	gchar *module_version = NULL;
-	if(g_module_symbol(module, "module_version", (gpointer *)&module_version)) {
-		if(g_strcmp0(STR(VERSION), module_version) != 0)
-			g_warning("%s: module has mismatched version, may be incompatible", name);
-	} else g_warning("%s: module has no version info, may be incompatible", name);
+	guint *major = NULL;
+	guint *minor = NULL;
+	gboolean has_major = g_module_symbol(module, "module_major_version", (gpointer *)&major);
+	gboolean has_minor = g_module_symbol(module, "module_minor_version", (gpointer *)&minor);
+	if(has_major && has_minor) {
+		if(*major != MAJOR_VERSION) report_error_and_exit("%s: module has mismatched major version (%u), is incompatible", name, *major);
+		else if(*minor != MINOR_VERSION) g_warning("%s: module has mismatched minor version (%u), may be incompatible", name, *minor);
+	}
+	else {
+		const gchar *gtklock_version = "v" STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MICRO_VERSION);
+		const gchar *module_version = NULL;
+		if(g_module_symbol(module, "module_version", (gpointer *)&module_version)) {
+			if(g_strcmp0(gtklock_version, module_version) != 0)
+				g_warning("%s: module has mismatched version, may be incompatible", name);
+		} else g_warning("%s: module has no version info, may be incompatible", name);
+	}
 
 	return module;
 }

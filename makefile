@@ -4,14 +4,16 @@
 # Makefile
 
 NAME := gtklock
+MAJOR_VERSION := 1
+MINOR_VERSION := 4
+MICRO_VERSION := 0
 
 PREFIX = /usr/local
 INSTALL = install
 
-include util/version.mk
-
 LIBS := pam wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-no-export-2.0
-CFLAGS += -std=c11 -DVERSION=$(VERSION) -DPREFIX=$(PREFIX) -Iinclude $(shell pkg-config --cflags $(LIBS))
+CFLAGS += -std=c11 -Iinclude -DPREFIX=$(PREFIX) $(shell pkg-config --cflags $(LIBS))
+CFLAGS += -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DMICRO_VERSION=$(MICRO_VERSION)
 LDLIBS += -Wl,--export-dynamic $(shell pkg-config --libs $(LIBS))
 
 SRC = $(wildcard src/*.c) 

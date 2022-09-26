@@ -16,9 +16,17 @@
 #include "module.h"
 #include "xdg.h"
 
-#ifndef VERSION
-#warning VERSION not defined.
-#define VERSION unknown
+#ifndef MAJOR_VERSION
+#warning MAJOR_VERSION not defined.
+#define MAJOR_VERSION 0
+#endif
+#ifndef MINOR_VERSION
+#warning MINOR_VERSION not defined.
+#define MINOR_VERSION 0
+#endif
+#ifndef MICRO_VERSION
+#warning MICRO_VERSION not defined.
+#define MICRO_VERSION 0
 #endif
 
 #define _STR(x) #x
@@ -263,7 +271,7 @@ int main(int argc, char **argv) {
 		report_error_and_exit("Option parsing failed: %s\n", error->message);
 
 	if(show_version) {
-		g_print("gtklock %s\n", STR(VERSION));
+		g_print("gtklock %s\n", "v" STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MICRO_VERSION));
 		return 0;
 	}
 
