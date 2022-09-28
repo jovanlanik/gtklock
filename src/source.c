@@ -207,20 +207,28 @@ static void daemonize(void) {
 		report_error_and_exit("Failed to daemonize!\n");
 	}
 
-	freopen("/dev/null", "r", stdin);
-	freopen("/dev/null", "w", stdout);
-	freopen("/dev/null", "w", stderr);
-
-	if(setsid() == -1) exit(1);
+	if(setsid() == -1) exit(EXIT_FAILURE);
 	pid = fork();
-	if(pid == -1) exit(1);
-	else if(pid != 0) exit(0);
+	if(pid == -1) exit(EXIT_FAILURE);
+	else if(pid != 0) exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char **argv) {
-	GError *error = NULL;
 	GOptionContext *option_context = g_option_context_new("- GTK-based lockscreen for sway");
 	g_option_context_add_main_entries(option_context, main_entries, NULL);
+	g_option_context_set_help_enabled(option_context, FALSE);
+	g_option_context_set_ignore_unknown_options(option_context, TRUE);
+	g_option_context_parse(option_context, &argc, &argv, NULL);
+
+	if(show_version) {
+		g_print("gtklock %s\n", "v" STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MICRO_VERSION));
+		exit(EXIT_SUCCESS);
+	}
+
+	if(should_daemonize) daemonize();
+
+	if(config_path == NULL) config_path = xdg_get_config_path("config.ini");
+	if(config_path) config_load(config_path, "main", config_entries);
 
 	GOptionGroup *config_group =
 		g_option_group_new("config", "Config options", "Show options available in the config", NULL, NULL);
@@ -231,17 +239,13 @@ int main(int argc, char **argv) {
 	g_option_group_add_entries(debug_group, debug_entries);
 	g_option_context_add_group(option_context, config_group);
 	g_option_context_add_group(option_context, debug_group);
-
 	g_option_context_add_group(option_context, gtk_get_option_group(TRUE));
+	g_option_context_parse(option_context, &argc, &argv, NULL);
 
-	g_option_context_set_help_enabled(option_context, FALSE);
-	g_option_context_set_ignore_unknown_options(option_context, TRUE);
-	g_option_context_parse(option_context, &argc, &argv, &error);
-
-	if(should_daemonize) daemonize();
-
-	if(config_path == NULL) config_path = xdg_get_config_path("config.ini");
-	if(config_path) config_load(config_path, "main", config_entries);
+	if(gtk_theme) {
+		GtkSettings *settings = gtk_settings_get_default();
+		g_object_set(settings, "gtk-theme-name", gtk_theme, NULL);
+	}
 
 	GArray *modules = g_array_new(FALSE, TRUE, sizeof(GModule *));
 	if(module_path) {
@@ -265,20 +269,11 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	GError *error = NULL;
 	g_option_context_set_help_enabled(option_context, TRUE);
 	g_option_context_set_ignore_unknown_options(option_context, FALSE);
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
 		report_error_and_exit("Option parsing failed: %s\n", error->message);
-
-	if(show_version) {
-		g_print("gtklock %s\n", "v" STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MICRO_VERSION));
-		return 0;
-	}
-
-	if(gtk_theme) {
-		GtkSettings *settings = gtk_settings_get_default();
-		g_object_set(settings, "gtk-theme-name", gtk_theme, NULL);
-	}
 
 	gtklock = create_gtklock();
 	gtklock->use_layer_shell = !no_layer_shell;
