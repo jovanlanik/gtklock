@@ -105,38 +105,40 @@ static void auth_child(const char *s, int *err, int *out) {
 }
 
 enum pwcheck auth_pw_check(const char *s) {
-	static int err_pipe[2];
-	static int out_pipe[2];
+	static pipe_t err_pipe;
+	static pipe_t out_pipe;
 	static pid_t pid = -2;
 
 	if(pid < 0) {
 		if(pipe(err_pipe) != 0) {
-			err_pipe[0] = open("/dev/null", O_RDONLY);
-			err_pipe[1] = open("/dev/null", O_WRONLY);
+			g_warning("err pipe failure");
+			return PW_WAIT;
 		}
 		if(pipe(out_pipe) != 0) {
-			out_pipe[0] = open("/dev/null", O_RDONLY);
-			out_pipe[1] = open("/dev/null", O_WRONLY);
+			close(err_pipe[PIPE_PARENT]);
+			close(err_pipe[PIPE_CHILD]);
+			g_warning("out pipe failure");
+			return PW_WAIT;
 		}
 		pid = fork();
 		if(pid == -1) {
-			close(err_pipe[0]);
-			close(err_pipe[1]);
-			close(out_pipe[0]);
-			close(out_pipe[1]);
+			close(err_pipe[PIPE_PARENT]);
+			close(err_pipe[PIPE_CHILD]);
+			close(out_pipe[PIPE_PARENT]);
+			close(out_pipe[PIPE_CHILD]);
 			g_warning("fork failure");
 			return PW_WAIT;
 		}
 		else if(pid == 0) {
-			close(err_pipe[0]);
-			close(out_pipe[0]);
+			close(err_pipe[PIPE_PARENT]);
+			close(out_pipe[PIPE_PARENT]);
 			freopen("/dev/null", "r", stdin);
 			auth_child(s, err_pipe, out_pipe);
 		}
-		close(err_pipe[1]);
-		close(out_pipe[1]);
-		fcntl(err_pipe[0], F_SETFL, O_NONBLOCK);
-		fcntl(out_pipe[0], F_SETFL, O_NONBLOCK);
+		close(err_pipe[PIPE_CHILD]);
+		close(out_pipe[PIPE_CHILD]);
+		fcntl(err_pipe[PIPE_PARENT], F_SETFL, O_NONBLOCK);
+		fcntl(out_pipe[PIPE_PARENT], F_SETFL, O_NONBLOCK);
 	}
 
 	if(error_string) free(error_string);
@@ -144,19 +146,19 @@ enum pwcheck auth_pw_check(const char *s) {
 
 	size_t len;
 	ssize_t nread;
-	nread = read(out_pipe[0], &len, sizeof(size_t));
-	if(nread > 0) {
-		message_string = malloc(len+1);
-		nread = read(out_pipe[0], message_string, len);
-		message_string[nread] = '\0';
-		return PW_MESSAGE;
-	}
-	nread = read(err_pipe[0], &len, sizeof(size_t));
+	nread = read(err_pipe[PIPE_PARENT], &len, sizeof(size_t));
 	if(nread > 0) {
 		error_string = malloc(len+1);
-		nread = read(out_pipe[0], error_string, len);
+		nread = read(err_pipe[PIPE_PARENT], error_string, len);
 		error_string[nread] = '\0';
 		return PW_ERROR;
+	}
+	nread = read(out_pipe[PIPE_PARENT], &len, sizeof(size_t));
+	if(nread > 0) {
+		message_string = malloc(len+1);
+		nread = read(out_pipe[PIPE_PARENT], message_string, len);
+		message_string[nread] = '\0';
+		return PW_MESSAGE;
 	}
 
 	int status;

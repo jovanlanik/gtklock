@@ -15,6 +15,14 @@ enum pwcheck {
 	PW_MESSAGE,
 };
 
+enum pipedir {
+	PIPE_PARENT,
+	PIPE_CHILD,
+	PIPE_LAST,
+};
+
+typedef int pipe_t[PIPE_LAST];
+
 char *auth_get_error(void);
 char *auth_get_message(void);
 enum pwcheck auth_pw_check(const char *s);
