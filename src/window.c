@@ -316,18 +316,18 @@ static void window_set_focus(struct Window *win, struct Window *old) {
 		if(old->input_field != NULL && win->input_field != NULL) {
 			// Get previous cursor position
 			gint cursor_pos = 0;
-			g_object_get((GtkEntry*)old->input_field, "cursor-position", &cursor_pos, NULL);
+			g_object_get(GTK_ENTRY(old->input_field), "cursor-position", &cursor_pos, NULL);
 
 			// Move content
-			gtk_entry_set_text((GtkEntry*)win->input_field, gtk_entry_get_text((GtkEntry*)old->input_field));
-			gtk_entry_set_text((GtkEntry*)old->input_field, "");
+			gtk_entry_set_text(GTK_ENTRY(win->input_field), gtk_entry_get_text(GTK_ENTRY(old->input_field)));
+			gtk_entry_set_text(GTK_ENTRY(old->input_field), "");
 
 			// Update new cursor position
-			g_signal_emit_by_name((GtkEntry*)win->input_field, "move-cursor", GTK_MOVEMENT_BUFFER_ENDS, -1, FALSE);
-			g_signal_emit_by_name((GtkEntry*)win->input_field, "move-cursor", GTK_MOVEMENT_LOGICAL_POSITIONS, cursor_pos, FALSE);
+			g_signal_emit_by_name(GTK_ENTRY(win->input_field), "move-cursor", GTK_MOVEMENT_BUFFER_ENDS, -1, FALSE);
+			g_signal_emit_by_name(GTK_ENTRY(win->input_field), "move-cursor", GTK_MOVEMENT_LOGICAL_POSITIONS, cursor_pos, FALSE);
 
 			// Copy pw visibility
-			window_pw_set_vis((GtkEntry*)win->input_field, gtk_entry_get_visibility((GtkEntry*)old->input_field));
+			window_pw_set_vis(GTK_ENTRY(win->input_field), gtk_entry_get_visibility(GTK_ENTRY(old->input_field)));
 		}
 		gtk_widget_show_all(old->window);
 	}
