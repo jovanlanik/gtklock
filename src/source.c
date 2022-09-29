@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
 				g_option_group_add_entries(module_group, module_entries);
 				g_option_context_add_group(option_context, module_group);
 
-				config_load(config_path, module_name, module_entries);
+				if(config_path) config_load(config_path, module_name, module_entries);
 			}
 		}
 	}
