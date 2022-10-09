@@ -248,7 +248,7 @@ static void window_setup_input(struct Window *ctx) {
 	gtk_widget_set_name(ctx->unlock_button, "unlock-button");
 	GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(ctx->unlock_button);
 	g_signal_connect(ctx->unlock_button, "clicked", G_CALLBACK(window_pw_check), ctx);
-	gtk_style_context_add_class(unlock_button_style, "suggested-action");
+	gtk_style_context_add_class(unlock_button_style, GTK_STYLE_CLASS_SUGGESTED_ACTION);
 	gtk_container_add(GTK_CONTAINER(button_box), ctx->unlock_button);
 
 	if(ctx->input_field != NULL) gtk_widget_grab_focus(ctx->input_field);
