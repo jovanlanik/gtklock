@@ -249,8 +249,7 @@ void window_swap_focus(struct Window *win, struct Window *old) {
 void window_idle_hide(struct Window *ctx) {
 	GtkStyleContext *context = gtk_widget_get_style_context(ctx->window);
 	gtk_style_context_add_class(context, "hidden");
-	if(ctx == gtklock->focused_window)
-		gtk_revealer_set_reveal_child(GTK_REVEALER(ctx->body_revealer), FALSE);
+	gtk_revealer_set_reveal_child(GTK_REVEALER(ctx->body_revealer), FALSE);
 }
 
 void window_idle_show(struct Window *ctx) {
