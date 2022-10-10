@@ -33,8 +33,6 @@ struct GtkLock {
 	GArray *modules;
 };
 
-struct Window *gtklock_window_by_widget(struct GtkLock *gtklock, GtkWidget *window);
-struct Window *gtklock_window_by_monitor(struct GtkLock *gtklock, GdkMonitor *monitor);
 void gtklock_remove_window(struct GtkLock *gtklock, struct Window *win);
 void gtklock_focus_window(struct GtkLock *gtklock, struct Window *win);
 void gtklock_update_clocks(struct GtkLock *gtklock);

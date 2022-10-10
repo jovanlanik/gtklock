@@ -11,15 +11,18 @@ MICRO_VERSION := 0
 PREFIX = /usr/local
 INSTALL = install
 
-LIBS := pam wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-no-export-2.0
+LIBS := pam wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-export-2.0
 CFLAGS += -std=c11 -Iinclude -DPREFIX=$(PREFIX) $(shell pkg-config --cflags $(LIBS))
 CFLAGS += -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DMICRO_VERSION=$(MICRO_VERSION)
 LDLIBS += -Wl,--export-dynamic $(shell pkg-config --libs $(LIBS))
 
-SRC = $(wildcard src/*.c) 
-OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o $(SRC:src/%.c=%.o)
+OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o
+OBJ += $(patsubst %.c, %.o, $(wildcard src/*.c))
+OBJ += $(patsubst res/%.gresource.xml, %.gresource.o, $(wildcard res/*.gresource.xml))
 
-TRASH = $(OBJ) $(NAME) $(NAME).1 $(wildcard *-client-protocol.c) $(wildcard include/*-client-protocol.h)
+TRASH = $(OBJ) $(NAME) $(NAME).1
+TRASH += $(wildcard *.gresource.c) $(wildcard *.gresource.h)
+TRASH += $(wildcard *-client-protocol.c) $(wildcard include/*-client-protocol.h)
 
 VPATH = src
 .PHONY: all clean install install-bin install-data uninstall
@@ -48,6 +51,12 @@ uninstall:
 
 $(NAME): $(OBJ)
 	$(LINK.c) $^ $(LDLIBS) -o $@
+
+%.gresource.c: res/%.gresource.xml
+	glib-compile-resources --generate-source $< --target=$@ --sourcedir=res
+
+%.gresource.h: res/%.gresource.xml
+	glib-compile-resources --generate-header $< --target=$@ --sourcedir=res
 
 %-client-protocol.c: wayland/%.xml
 	wayland-scanner private-code $< $@

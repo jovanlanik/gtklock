@@ -13,6 +13,7 @@ struct Window {
 	GtkWidget *window;
 	GtkWidget *overlay;
 	GtkWidget *window_box;
+	GtkWidget *body_revealer;
 	GtkWidget *body_grid;
 	GtkWidget *input_label;
 	GtkWidget *input_field;
@@ -27,8 +28,11 @@ struct Window {
 	void *module_data[];
 };
 
+struct Window *window_by_widget(GtkWidget *window);
+struct Window *window_by_monitor(GdkMonitor *monitor);
 struct Window *create_window(GdkMonitor *monitor);
-void window_configure(struct Window *win);
+void window_idle_hide(struct Window *win);
+void window_idle_show(struct Window *win);
 void window_update_clock(struct Window *ctx);
 void window_swap_focus(struct Window *win, struct Window *old);
 

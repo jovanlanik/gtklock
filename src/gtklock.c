@@ -11,22 +11,6 @@
 #include "module.h"
 #include "input-inhibitor.h"
 
-struct Window* gtklock_window_by_widget(struct GtkLock *gtklock, GtkWidget *window) {
-	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
-		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
-		if(ctx->window == window) return ctx;
-	}
-	return NULL;
-}
-
-struct Window* gtklock_window_by_monitor(struct GtkLock *gtklock, GdkMonitor *monitor) {
-	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
-		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
-		if(ctx->monitor == monitor) return ctx;
-	}
-	return NULL;
-}
-
 void gtklock_remove_window(struct GtkLock *gtklock, struct Window *win) {
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
 		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
@@ -42,10 +26,6 @@ void gtklock_focus_window(struct GtkLock *gtklock, struct Window* win) {
 	struct Window *old = gtklock->focused_window;
 	gtklock->focused_window = win;
 	window_swap_focus(win, old);
-	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
-		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
-		if(ctx != win) window_configure(ctx);
-	}
 	module_on_focus_change(gtklock, win, old);
 }
 
@@ -78,15 +58,23 @@ void gtklock_idle_hide(struct GtkLock *gtklock) {
 	if(!gtklock->use_idle_hide || gtklock->hidden || g_application_get_is_busy(G_APPLICATION(gtklock->app)))
 		return;
 	gtklock->hidden = TRUE;
-	if(gtklock->focused_window) window_configure(gtklock->focused_window);
 	module_on_idle_hide(gtklock);
+
+	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
+		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
+		window_idle_hide(ctx);
+	}
 }
 
 void gtklock_idle_show(struct GtkLock *gtklock) {
 	if(gtklock->hidden) {
 		gtklock->hidden = FALSE;
-		if(gtklock->focused_window) window_configure(gtklock->focused_window);
 		module_on_idle_show(gtklock);
+	}
+
+	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
+		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
+		window_idle_show(ctx);
 	}
 
 	if(!gtklock->use_idle_hide) return;
