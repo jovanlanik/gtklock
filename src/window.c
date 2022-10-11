@@ -205,6 +205,7 @@ void window_pw_toggle_vis(GtkEntry* entry, GtkEntryIconPosition icon_pos) {
 
 static void window_destroy_notify(GtkWidget *widget, gpointer data) {
 	struct Window *win = window_by_widget(widget);
+	module_on_window_destroy(gtklock, win);
 	gtk_widget_destroy(widget);
 	gtklock_remove_window(gtklock, win);
 }
@@ -341,11 +342,11 @@ struct Window *create_window(GdkMonitor *monitor) {
 	w->clock_label = GTK_WIDGET(gtk_builder_get_object(builder, "clock-label"));
 	window_update_clock(w);
 
-	g_object_unref(builder);
-
 	if(gtklock->hidden) window_idle_hide(w);
+	module_on_window_create(gtklock, w);
 	gtk_widget_show_all(w->window);
 
+	g_object_unref(builder);
 	return w;
 }
 

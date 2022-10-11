@@ -109,3 +109,19 @@ void module_on_idle_show(struct GtkLock *gtklock) {
 	}
 }
 
+void module_on_window_create(struct GtkLock *gtklock, struct Window *win) {
+	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
+		void (*fn)(struct GtkLock *, struct Window *) = NULL;
+		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
+		if(g_module_symbol(module, "on_window_create", (gpointer *)&fn)) fn(gtklock, win);
+	}
+}
+
+void module_on_window_destroy(struct GtkLock *gtklock, struct Window *win) {
+	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
+		void (*fn)(struct GtkLock *, struct Window *) = NULL;
+		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
+		if(g_module_symbol(module, "on_window_destroy", (gpointer *)&fn)) fn(gtklock, win);
+	}
+}
+
