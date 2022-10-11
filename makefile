@@ -4,8 +4,8 @@
 # Makefile
 
 NAME := gtklock
-MAJOR_VERSION := 1
-MINOR_VERSION := 4
+MAJOR_VERSION := 2
+MINOR_VERSION := 0
 MICRO_VERSION := 0
 
 PREFIX = /usr/local
