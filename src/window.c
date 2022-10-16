@@ -17,13 +17,25 @@
 
 extern struct GtkLock *gtklock;
 
-static void window_set_focus_layer_shell(struct Window *win, struct Window *old) {
-	if(old != NULL) gtk_layer_set_keyboard_mode(GTK_WINDOW(old->window), GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
-	gtk_layer_set_keyboard_mode(GTK_WINDOW(win->window), GTK_LAYER_SHELL_KEYBOARD_MODE_EXCLUSIVE);
+struct Window *window_by_widget(GtkWidget *window) {
+	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
+		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
+		if(ctx->window == window) return ctx;
+	}
+	return NULL;
+}
+
+struct Window *window_by_monitor(GdkMonitor *monitor) {
+	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
+		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
+		if(ctx->monitor == monitor) return ctx;
+	}
+	return NULL;
 }
 
 static gboolean window_enter_notify(GtkWidget *widget, gpointer data) {
-	struct Window *win = gtklock_window_by_widget(gtklock, widget);
+	struct Window *win = window_by_widget(widget);
+	gtk_entry_grab_focus_without_selecting(GTK_ENTRY(win->input_field));
 	gtklock_focus_window(gtklock, win);
 	return FALSE;
 }
@@ -51,36 +63,10 @@ void window_update_clock(struct Window *ctx) {
 	gtk_label_set_text(GTK_LABEL(ctx->clock_label), gtklock->time);
 }
 
-static void window_body_empty(struct Window *ctx) {
-	if(ctx->body_grid != NULL) {
-		gtk_widget_destroy(ctx->body_grid);
-		ctx->body_grid = NULL;
-	}
-	ctx->input_label = NULL;
-	ctx->input_field = NULL;
-	ctx->message_box = NULL;
-	ctx->unlock_button = NULL;
-	ctx->error_label = NULL;
-	ctx->warning_label = NULL;
-	module_on_body_empty(gtklock, ctx);
-}
-
-static void window_empty(struct Window *ctx) {
-	if(ctx->overlay != NULL) {
-		gtk_widget_destroy(ctx->overlay);
-		ctx->overlay = NULL;
-	}
-	ctx->window_box = NULL;
-	ctx->clock_label = NULL;
-	ctx->body_grid = NULL;
-	window_body_empty(ctx);
-	module_on_window_empty(gtklock, ctx);
-}
-
 static void window_setup_messages(struct Window *ctx);
 
 static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) {
-	struct Window *ctx = gtklock_window_by_widget(gtklock, gtk_widget_get_toplevel(GTK_WIDGET(bar)));
+	struct Window *ctx = window_by_widget(gtk_widget_get_toplevel(GTK_WIDGET(bar)));
 	gtk_widget_destroy(GTK_WIDGET(bar));
 	for(guint idx = 0; idx < gtklock->errors->len; idx++) {
 		char *err = g_array_index(gtklock->errors, char *, idx);
@@ -155,7 +141,7 @@ static gboolean window_pw_failure(gpointer data) {
 	struct Window *ctx = data;
 	window_set_busy(ctx, FALSE);
 	gtk_entry_set_text(GTK_ENTRY(ctx->input_field), "");
-	gtk_widget_grab_focus(ctx->input_field);
+	gtk_entry_grab_focus_without_selecting(GTK_ENTRY(ctx->input_field));
 	gtk_label_set_text(GTK_LABEL(ctx->error_label), "Login failed");
 	return G_SOURCE_REMOVE;
 }
@@ -198,7 +184,7 @@ static gpointer window_pw_wait(gpointer data) {
 
 }
 
-static void window_pw_check(GtkWidget *widget, gpointer data) {
+void window_pw_check(GtkWidget *widget, gpointer data) {
 	struct Window *ctx = data;
 	window_set_busy(ctx, TRUE);
 	gtk_label_set_text(GTK_LABEL(ctx->error_label), NULL);
@@ -211,105 +197,34 @@ static void window_pw_set_vis(GtkEntry* entry, gboolean visibility) {
 	gtk_entry_set_visibility(entry, visibility);
 }
 
-static void window_pw_toggle_vis(GtkEntry* entry, GtkEntryIconPosition icon_pos) {
+void window_pw_toggle_vis(GtkEntry* entry, GtkEntryIconPosition icon_pos) {
 	if(icon_pos != GTK_ENTRY_ICON_SECONDARY) return;
 	gboolean visibility = gtk_entry_get_visibility(entry);
 	window_pw_set_vis(entry, !visibility);
 }
 
-static void window_setup_input(struct Window *ctx) {
-	ctx->input_label = gtk_label_new("Password:");
-	gtk_widget_set_name(ctx->input_label, "input-label");
-	gtk_grid_attach(GTK_GRID(ctx->body_grid), ctx->input_label, 0, 0, 1, 1);
-
-	ctx->input_field = gtk_entry_new();
-	gtk_widget_set_name(ctx->input_field, "input-field");
-	gtk_entry_set_input_purpose(GTK_ENTRY(ctx->input_field), GTK_INPUT_PURPOSE_PASSWORD);
-	g_object_set(ctx->input_field, "caps-lock-warning", FALSE, NULL);
-	window_pw_set_vis((GtkEntry*)ctx->input_field, FALSE);
-	g_signal_connect(ctx->input_field, "icon-release", G_CALLBACK(window_pw_toggle_vis), NULL);
-	g_signal_connect(ctx->input_field, "activate", G_CALLBACK(window_pw_check), ctx);
-	gtk_widget_set_size_request(ctx->input_field, 380, -1);
-	gtk_grid_attach(GTK_GRID(ctx->body_grid), ctx->input_field, 1, 0, 2, 1);
-
-	GtkWidget *button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-	gtk_widget_set_halign(button_box, GTK_ALIGN_END);
-	gtk_grid_attach(GTK_GRID(ctx->body_grid), button_box, 1, 2, 2, 1);
-
-	ctx->warning_label = gtk_label_new(NULL);
-	gtk_widget_set_name(ctx->warning_label, "warning-label");
-	gtk_container_add(GTK_CONTAINER(button_box), ctx->warning_label);
-
-	ctx->error_label = gtk_label_new(NULL);
-	gtk_widget_set_name(ctx->error_label, "error-label");
-	gtk_container_add(GTK_CONTAINER(button_box), ctx->error_label);
-
-	ctx->unlock_button = gtk_button_new_with_label("Unlock");
-	gtk_widget_set_name(ctx->unlock_button, "unlock-button");
-	GtkStyleContext *unlock_button_style = gtk_widget_get_style_context(ctx->unlock_button);
-	g_signal_connect(ctx->unlock_button, "clicked", G_CALLBACK(window_pw_check), ctx);
-	gtk_style_context_add_class(unlock_button_style, "suggested-action");
-	gtk_container_add(GTK_CONTAINER(button_box), ctx->unlock_button);
-
-	if(ctx->input_field != NULL) gtk_widget_grab_focus(ctx->input_field);
-}
-
-static void window_setup(struct Window *ctx) {
-	// Create general structure if it is missing
-	if(ctx->overlay == NULL) {
-		ctx->overlay = gtk_overlay_new();
-		gtk_container_add(GTK_CONTAINER(ctx->window), ctx->overlay);
-
-		ctx->window_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-		g_object_set(ctx->window_box, "margin", 100, NULL);
-		gtk_widget_set_valign(ctx->window_box, GTK_ALIGN_CENTER);
-		gtk_widget_set_halign(ctx->window_box, GTK_ALIGN_CENTER);
-		gtk_widget_set_name(ctx->window_box, "window-box");
-		gtk_container_add(GTK_CONTAINER(ctx->overlay), ctx->window_box);
-
-		ctx->clock_label = gtk_label_new("");
-		gtk_widget_set_halign(ctx->clock_label, GTK_ALIGN_CENTER);
-		gtk_widget_set_name(ctx->clock_label, "clock-label");
-		g_object_set(ctx->clock_label, "margin-bottom", 10, NULL);
-		gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->clock_label);
-		window_update_clock(ctx);
-	}
-
-	GtkStyleContext *context = gtk_widget_get_style_context(ctx->window);
-	if(gtklock->hidden) gtk_style_context_add_class(context, "hidden");
-	else gtk_style_context_remove_class(context, "hidden");
-
-	// Update input area if necessary
-	if((gtklock->focused_window == ctx && !gtklock->hidden) || gtklock->focused_window == NULL) {
-		if(ctx->body_grid == NULL) {
-			ctx->body_grid = gtk_grid_new();
-			gtk_grid_set_row_spacing(GTK_GRID(ctx->body_grid), 5);
-			gtk_grid_set_column_spacing(GTK_GRID(ctx->body_grid), 5);
-			gtk_widget_set_name(ctx->body_grid, "body-grid");
-			gtk_widget_set_size_request(ctx->body_grid, 384, -1);
-			gtk_container_add(GTK_CONTAINER(ctx->window_box), ctx->body_grid);
-			window_setup_input(ctx);
-			window_setup_messages(ctx);
-		}
-	}
-	else if(ctx->body_grid != NULL) window_body_empty(ctx);
-	window_update_clock(ctx);
-}
-
 static void window_destroy_notify(GtkWidget *widget, gpointer data) {
-	struct Window *win = gtklock_window_by_widget(gtklock, widget);
-	window_empty(win);
+	struct Window *win = window_by_widget(widget);
+	module_on_window_destroy(gtklock, win);
+	gtk_widget_destroy(widget);
 	gtklock_remove_window(gtklock, win);
 }
 
-static void window_set_focus(struct Window *win, struct Window *old) {
-	assert(win != NULL);
-	window_setup(win);
+void window_swap_focus(struct Window *win, struct Window *old) {
+	if(!gtklock->hidden) gtk_revealer_set_reveal_child(GTK_REVEALER(win->body_revealer), TRUE);
+
+	if(gtklock->use_layer_shell)
+		gtk_layer_set_keyboard_mode(GTK_WINDOW(win->window), GTK_LAYER_SHELL_KEYBOARD_MODE_EXCLUSIVE);
 
 	GtkStyleContext *win_context = gtk_widget_get_style_context(win->window);
 	gtk_style_context_add_class(win_context, "focused");
 
 	if(old != NULL && old != win) {
+		gtk_revealer_set_reveal_child(GTK_REVEALER(old->body_revealer), FALSE);
+
+		if(gtklock->use_layer_shell)
+			gtk_layer_set_keyboard_mode(GTK_WINDOW(old->window), GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
+
 		GtkStyleContext *old_context = gtk_widget_get_style_context(old->window);
 		gtk_style_context_remove_class(old_context, "focused");
 
@@ -329,44 +244,39 @@ static void window_set_focus(struct Window *win, struct Window *old) {
 			// Copy pw visibility
 			window_pw_set_vis(GTK_ENTRY(win->input_field), gtk_entry_get_visibility(GTK_ENTRY(old->input_field)));
 		}
-		gtk_widget_show_all(old->window);
 	}
-	gtk_widget_show_all(win->window);
 }
 
-void window_swap_focus(struct Window *win, struct Window *old) {
-	if(gtklock->use_layer_shell) window_set_focus_layer_shell(win, old);
-	window_set_focus(win, old);
+void window_idle_hide(struct Window *ctx) {
+	GtkStyleContext *context = gtk_widget_get_style_context(ctx->window);
+	gtk_style_context_add_class(context, "hidden");
+	gtk_revealer_set_reveal_child(GTK_REVEALER(ctx->body_revealer), FALSE);
 }
 
-void window_configure(struct Window *w) {
-	window_setup(w);
-	gtk_widget_show_all(w->window);
+void window_idle_show(struct Window *ctx) {
+	GtkStyleContext *context = gtk_widget_get_style_context(ctx->window);
+	gtk_style_context_remove_class(context, "hidden");
+	if(ctx == gtklock->focused_window) {
+		gtk_revealer_set_reveal_child(GTK_REVEALER(ctx->body_revealer), TRUE);
+		gtk_entry_grab_focus_without_selecting(GTK_ENTRY(ctx->input_field));
+	}
 }
 
 static gboolean window_idle_key(GtkWidget *self, GdkEventKey event, gpointer user_data) {
 	gtklock_idle_show(gtklock);
 	return FALSE;
 }
-
 static gboolean window_idle_motion(GtkWidget *self, GdkEventMotion event, gpointer user_data) {
 	gtklock_idle_show(gtklock);
 	return FALSE;
 }
 
 void window_caps_state_changed(GdkKeymap *self, gpointer user_data) {
-	struct Window *w = NULL;
-	if(gtklock->focused_window == NULL) {
-		if(!gtklock->use_layer_shell) w = g_array_index(gtklock->windows, struct Window *, 0);
-	} else w = gtklock->focused_window;
-
+	struct Window *w = gtklock->focused_window;
 	if(!w || !w->warning_label) return;
 
-	if(gdk_keymap_get_caps_lock_state(self))
-		gtk_label_set_text(GTK_LABEL(w->warning_label), "Caps Lock is on");
-	else
-		gtk_label_set_text(GTK_LABEL(w->warning_label), "");
-	gtk_widget_show(w->warning_label);
+	if(gdk_keymap_get_caps_lock_state(self)) gtk_label_set_text(GTK_LABEL(w->warning_label), "Caps Lock is on");
+	else gtk_label_set_text(GTK_LABEL(w->warning_label), "");
 }
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -409,6 +319,34 @@ struct Window *create_window(GdkMonitor *monitor) {
 	gtk_widget_realize(w->window);
 	if(gtklock->use_layer_shell) window_setup_layer_shell(w);
 
+	w->overlay = gtk_overlay_new();
+	gtk_container_add(GTK_CONTAINER(w->window), w->overlay);
+	
+	GtkBuilder *builder = gtk_builder_new_from_resource("/gtklock/gtklock.ui");
+	gtk_builder_connect_signals(builder, w);
+
+	w->window_box = GTK_WIDGET(gtk_builder_get_object(builder, "window-box"));
+	gtk_container_add(GTK_CONTAINER(w->overlay), w->window_box);
+
+	w->body_revealer = GTK_WIDGET(gtk_builder_get_object(builder, "body-revealer"));
+	w->body_grid = GTK_WIDGET(gtk_builder_get_object(builder, "body-grid"));
+	w->input_label = GTK_WIDGET(gtk_builder_get_object(builder, "input-label"));
+
+	w->input_field = GTK_WIDGET(gtk_builder_get_object(builder, "input-field"));
+
+	w->message_box = GTK_WIDGET(gtk_builder_get_object(builder, "message-box"));
+	w->unlock_button = GTK_WIDGET(gtk_builder_get_object(builder, "unlock-button"));
+	w->error_label = GTK_WIDGET(gtk_builder_get_object(builder, "error-label"));
+	w->warning_label = GTK_WIDGET(gtk_builder_get_object(builder, "warning-label"));
+
+	w->clock_label = GTK_WIDGET(gtk_builder_get_object(builder, "clock-label"));
+	window_update_clock(w);
+
+	if(gtklock->hidden) window_idle_hide(w);
+	module_on_window_create(gtklock, w);
+	gtk_widget_show_all(w->window);
+
+	g_object_unref(builder);
 	return w;
 }
 

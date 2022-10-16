@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<object class="GtkBox" id="window-box">
+		<property name="name">window-box</property>
+		<property name="margin">100</property>
+		<property name="halign">center</property>
+		<property name="valign">center</property>
+		<property name="orientation">vertical</property>
+		<property name="spacing">5</property>
+		<child>
+			<object class="GtkLabel" id="clock-label">
+				<property name="name">clock-label</property>
+				<property name="halign">center</property>
+				<property name="margin-bottom">10</property>
+				<property name="label"></property>
+			</object>
+		</child>
+		<child>
+			<object class="GtkRevealer" id="body-revealer">
+				<property name="transition-type">none</property>
+				<property name="reveal-child">True</property>
+				<child>
+					<object class="GtkGrid" id="body-grid">
+						<property name="row-spacing">5</property>
+						<property name="column-spacing">5</property>
+						<child>
+							<object class="GtkLabel" id="input-label">
+								<property name="name">input-label</property>
+								<property name="label">Password:</property>
+							</object>
+							<packing>
+								<property name="left-attach">0</property>
+								<property name="top-attach">0</property>
+							</packing>
+						</child>
+						<child>
+							<object class="GtkEntry" id="input-field">
+								<property name="name">input-field</property>
+								<property name="width-request">380</property>
+								<property name="visibility">False</property>
+								<property name="caps-lock-warning">False</property>
+								<property name="input-purpose">password</property>
+								<signal name="icon-release" handler="window_pw_toggle_vis"/>
+								<signal name="activate" handler="window_pw_check"/>
+							</object>
+							<packing>
+								<property name="left-attach">1</property>
+								<property name="top-attach">0</property>
+								<property name="width">2</property>
+							</packing>
+						</child>
+						<child>
+							<object class="GtkBox" id="message-box">
+								<property name="no-show-all">True</property>
+							</object>
+							<packing>
+								<property name="left-attach">1</property>
+								<property name="top-attach">1</property>
+								<property name="width">2</property>
+							</packing>
+						</child>
+						<child>
+							<object class="GtkBox">
+								<property name="halign">end</property>
+								<property name="spacing">5</property>
+								<child>
+									<object class="GtkLabel" id="warning-label">
+										<property name="name">warning-label</property>
+										<property name="label"></property>
+									</object>
+								</child>
+								<child>
+									<object class="GtkLabel" id="error-label">
+										<property name="name">error-label</property>
+										<property name="label"></property>
+									</object>
+								</child>
+								<child>
+									<object class="GtkButton" id="unlock-button">
+										<property name="name">unlock-button</property>
+										<property name="label">Unlock</property>
+										<property name="can-focus">False</property>
+										<property name="receives-default">False</property>
+										<style>
+											<class name="suggested-action"/>
+										</style>
+										<signal name="clicked" handler="window_pw_check"/>
+									</object>
+								</child>
+							</object>
+							<packing>
+								<property name="left-attach">1</property>
+								<property name="top-attach">2</property>
+								<property name="width">2</property>
+							</packing>
+						</child>
+					</object>
+				</child>
+			</object>
+		</child>
+	</object>
+</interface>

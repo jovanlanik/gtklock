@@ -93,22 +93,6 @@ void module_on_focus_change(struct GtkLock *gtklock, struct Window *win, struct 
 	}
 }
 
-void module_on_window_empty(struct GtkLock *gtklock, struct Window *ctx) {
-	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
-		void (*fn)(struct GtkLock *, struct Window *) = NULL;
-		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
-		if(g_module_symbol(module, "on_window_empty", (gpointer *)&fn)) fn(gtklock, ctx);
-	}
-}
-
-void module_on_body_empty(struct GtkLock *gtklock, struct Window *ctx) {
-	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
-		void (*fn)(struct GtkLock *, struct Window *) = NULL;
-		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
-		if(g_module_symbol(module, "on_body_empty", (gpointer *)&fn)) fn(gtklock, ctx);
-	}
-}
-
 void module_on_idle_hide(struct GtkLock *gtklock) {
 	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
 		void (*fn)(struct GtkLock *) = NULL;
@@ -122,6 +106,22 @@ void module_on_idle_show(struct GtkLock *gtklock) {
 		void (*fn)(struct GtkLock *) = NULL;
 		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
 		if(g_module_symbol(module, "on_idle_show", (gpointer *)&fn)) fn(gtklock);
+	}
+}
+
+void module_on_window_create(struct GtkLock *gtklock, struct Window *win) {
+	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
+		void (*fn)(struct GtkLock *, struct Window *) = NULL;
+		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
+		if(g_module_symbol(module, "on_window_create", (gpointer *)&fn)) fn(gtklock, win);
+	}
+}
+
+void module_on_window_destroy(struct GtkLock *gtklock, struct Window *win) {
+	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
+		void (*fn)(struct GtkLock *, struct Window *) = NULL;
+		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
+		if(g_module_symbol(module, "on_window_destroy", (gpointer *)&fn)) fn(gtklock, win);
 	}
 }
 

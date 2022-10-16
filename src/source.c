@@ -92,7 +92,7 @@ static void reload_outputs(void) {
 	struct Window *new = NULL;
 	for(int i = 0; i < gdk_display_get_n_monitors(display); i++) {
 		GdkMonitor *monitor = gdk_display_get_monitor(display, i);
-		struct Window *w = gtklock_window_by_monitor(gtklock, monitor);
+		struct Window *w = window_by_monitor(monitor);
 		if(w != NULL) {
 			// We already have this monitor, remove from dead_windows list
 			for(guint idx = 0; idx < dead_windows->len; idx++) {
@@ -101,7 +101,10 @@ static void reload_outputs(void) {
 					break;
 				}
 			}
-		} else w = create_window(monitor);
+		} else {
+			w = create_window(monitor);
+			gtklock_focus_window(gtklock, w);
+		}
 		new = w;
 	}
 
@@ -115,11 +118,6 @@ static void reload_outputs(void) {
 		gtk_widget_destroy(w->window);
 	}
 
-	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
-		struct Window *w = g_array_index(gtklock->windows, struct Window*, idx);
-		window_configure(w);
-	}
-
 	g_array_unref(dead_windows);
 	module_on_output_change(gtklock);
 }
@@ -129,13 +127,14 @@ static void monitors_changed(GdkDisplay *display, GdkMonitor *monitor) {
 }
 
 static gboolean setup_layer_shell(void) {
-	if(gtklock->use_layer_shell) {
-		reload_outputs();
-		GdkDisplay *display = gdk_display_get_default();
-		g_signal_connect(display, "monitor-added", G_CALLBACK(monitors_changed), NULL);
-		g_signal_connect(display, "monitor-removed", G_CALLBACK(monitors_changed), NULL);
-		return TRUE;
-	} else return FALSE;
+	if(!gtklock->use_layer_shell) return FALSE;
+
+	reload_outputs();
+
+	GdkDisplay *display = gdk_display_get_default();
+	g_signal_connect(display, "monitor-added", G_CALLBACK(monitors_changed), NULL);
+	g_signal_connect(display, "monitor-removed", G_CALLBACK(monitors_changed), NULL);
+	return TRUE;
 }
 
 static void activate(GtkApplication *app, gpointer user_data) {
