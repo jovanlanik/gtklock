@@ -1,7 +1,9 @@
 // gtklock
 // Copyright (c) 2022 Kenny Levinsen, Jovan Lanik
 
+#ifndef __FreeBSD__
 #define _POSIX_C_SOURCE
+#endif
 
 #include <assert.h>
 #include <signal.h>
