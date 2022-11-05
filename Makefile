@@ -9,6 +9,10 @@ MINOR_VERSION := 0
 MICRO_VERSION := 0
 
 PREFIX = /usr/local
+SYSCONFDIR = /etc
+ifeq ($(shell uname), FreeBSD)
+	SYSCONFDIR = $(PREFIX)/etc
+endif
 INSTALL = install
 
 LIBS := pam wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-export-2.0
@@ -43,8 +47,8 @@ install-bin:
 	$(INSTALL) $(NAME) $(DESTDIR)$(PREFIX)/bin/$(NAME)
 
 install-data:
-	$(INSTALL) -d $(DESTDIR)/etc/pam.d
-	$(INSTALL) -m644 pam/$(NAME) $(DESTDIR)/etc/pam.d/$(NAME)
+	$(INSTALL) -d $(DESTDIR)$(SYSCONFDIR)/pam.d
+	$(INSTALL) -m644 pam/$(NAME) $(DESTDIR)$(SYSCONFDIR)/pam.d/$(NAME)
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/share/man/man1
 	$(INSTALL) -m644 $(NAME).1 $(DESTDIR)$(PREFIX)/share/man/man1/$(NAME).1
 
@@ -52,7 +56,7 @@ install: install-bin install-data
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(NAME)
-	rm -f $(DESTDIR)/etc/pam.d/$(NAME)
+	rm -f $(DESTDIR)$(SYSCONFDIR)/pam.d/$(NAME)
 	rm -r $(DESTDIR)$(PREFIX)/share/man/man1/$(NAME).1
 
 $(NAME): $(OBJ)
