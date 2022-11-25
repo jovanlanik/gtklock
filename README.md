@@ -7,7 +7,7 @@ gtklock is a lockscreen based on [gtkgreet](https://git.sr.ht/~kennylevinsen/gtk
 It uses the wlr-layer-shell and wlr-input-inhibitor Wayland protocols.
 Works on sway and other wlroots-based compositors.
 
-ℹ️ __For documentation, check out the [wiki](https://github.com/jovanlanik/gtklock/wiki).__
+ℹ️ __For documentation, check out the [man page](https://man.voidlinux.org/gtklock) and [wiki](https://github.com/jovanlanik/gtklock/wiki).__
 
 Available on these repositories:
 
