@@ -49,6 +49,7 @@ static gchar *style_path = NULL;
 static gchar **module_path = NULL;
 static gchar *background_path = NULL;
 static gchar *time_format = NULL;
+static gchar *lock_command = NULL;
 static gchar *unlock_command = NULL;
 
 static GOptionEntry main_entries[] = {
@@ -67,6 +68,7 @@ static GOptionEntry config_entries[] = {
 	{ "idle-hide", 'H', 0, G_OPTION_ARG_NONE, &idle_hide, "Hide form when idle", NULL },
 	{ "idle-timeout", 'T', 0, G_OPTION_ARG_INT, &idle_timeout, "Idle timeout in seconds", NULL },
 	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
+	{ "lock-command", 'L', 0, G_OPTION_ARG_STRING, &lock_command, "Command to execute before locking", NULL },
 	{ "unlock-command", 'U', 0, G_OPTION_ARG_STRING, &unlock_command, "Command to execute after unlocking", NULL },
 	{ NULL },
 };
@@ -277,6 +279,8 @@ int main(int argc, char **argv) {
 	g_option_context_set_ignore_unknown_options(option_context, FALSE);
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
 		report_error_and_exit("Option parsing failed: %s\n", error->message);
+
+	if(lock_command) exec_command(lock_command);
 
 	if(gtk_theme) {
 		GtkSettings *settings = gtk_settings_get_default();
