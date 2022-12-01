@@ -60,6 +60,12 @@ All available options are:
 *-S, --start-hidden*
 	Start with input form hidden.
 
+*-L, --lock-command*
+	Command to execute before locking. Command is executed asynchronously.
+
+*-U, --unlock-command*
+	Command to execute after unlocking. Command is executed asynchronously.
+
 # EXAMPLE
 
 Example config:
