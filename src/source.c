@@ -43,13 +43,13 @@ static gboolean start_hidden = FALSE;
 
 static gint idle_timeout = 15;
 
-static char *gtk_theme = NULL;
-
-static char *config_path = NULL;
-static char *style_path = NULL;
-static char **module_path = NULL;
-static char *background_path = NULL;
-static char *time_format = NULL;
+static gchar *gtk_theme = NULL;
+static gchar *config_path = NULL;
+static gchar *style_path = NULL;
+static gchar **module_path = NULL;
+static gchar *background_path = NULL;
+static gchar *time_format = NULL;
+static gchar *unlock_command = NULL;
 
 static GOptionEntry main_entries[] = {
 	{ "version", 'v', 0, G_OPTION_ARG_NONE, &show_version, "Show version", NULL },
@@ -67,6 +67,7 @@ static GOptionEntry config_entries[] = {
 	{ "idle-hide", 'H', 0, G_OPTION_ARG_NONE, &idle_hide, "Hide form when idle", NULL },
 	{ "idle-timeout", 'T', 0, G_OPTION_ARG_INT, &idle_timeout, "Idle timeout in seconds", NULL },
 	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
+	{ "unlock-command", 'U', 0, G_OPTION_ARG_STRING, &unlock_command, "Command to execute after unlocking", NULL },
 	{ NULL },
 };
 
@@ -155,8 +156,8 @@ static void shutdown(GtkApplication *app, gpointer user_data) {
 	gtklock_shutdown(gtklock);
 }
 
-static void attach_style(const char *format, ...) G_GNUC_PRINTF(1, 2);
-static void attach_style(const char *format, ...) {
+static void attach_style(const gchar *format, ...) G_GNUC_PRINTF(1, 2);
+static void attach_style(const gchar *format, ...) {
 	GtkCssProvider *provider = gtk_css_provider_new();
 	GError *err = NULL;
 	va_list args;
@@ -177,7 +178,7 @@ static void attach_style(const char *format, ...) {
 	g_free(buff);
 }
 
-static void attach_custom_style(const char *path) {
+static void attach_custom_style(const gchar *path) {
 	GtkCssProvider *provider = gtk_css_provider_new();
 	GError *err = NULL;
 
@@ -199,10 +200,8 @@ static void daemonize(void) {
 	else if(pid != 0) {
 		int status;
 		waitpid(pid, &status, 0);
-		if(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS) {
-			g_usleep(G_USEC_PER_SEC);
-			exit(0);
-		}
+		if(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS)
+			exit(EXIT_SUCCESS);
 		report_error_and_exit("Failed to daemonize!\n");
 	}
 
@@ -210,6 +209,16 @@ static void daemonize(void) {
 	pid = fork();
 	if(pid == -1) exit(EXIT_FAILURE);
 	else if(pid != 0) exit(EXIT_SUCCESS);
+}
+
+void exec_command(const gchar *command) {
+	GError *err = NULL;
+
+	g_spawn_command_line_async(command, &err);
+	if(err != NULL) {
+		g_warning("Executing `%s` failed: %s", command, err->message);
+		g_error_free(err);
+	}
 }
 
 int main(int argc, char **argv) {
@@ -241,11 +250,6 @@ int main(int argc, char **argv) {
 	g_option_context_add_group(option_context, gtk_get_option_group(TRUE));
 	g_option_context_parse(option_context, &argc, &argv, NULL);
 
-	if(gtk_theme) {
-		GtkSettings *settings = gtk_settings_get_default();
-		g_object_set(settings, "gtk-theme-name", gtk_theme, NULL);
-	}
-
 	GArray *modules = g_array_new(FALSE, TRUE, sizeof(GModule *));
 	if(module_path) {
 		for(guint i = 0; module_path[i] != NULL; ++i) {
@@ -273,6 +277,11 @@ int main(int argc, char **argv) {
 	g_option_context_set_ignore_unknown_options(option_context, FALSE);
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
 		report_error_and_exit("Option parsing failed: %s\n", error->message);
+
+	if(gtk_theme) {
+		GtkSettings *settings = gtk_settings_get_default();
+		g_object_set(settings, "gtk-theme-name", gtk_theme, NULL);
+	}
 
 	gtklock = create_gtklock();
 	gtklock->use_layer_shell = !no_layer_shell;
@@ -323,6 +332,7 @@ int main(int argc, char **argv) {
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
 
 	gtklock_destroy(gtklock);
+	if(unlock_command) exec_command(unlock_command);
 	return status;
 }
 
