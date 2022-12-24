@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <glib-unix.h>
 #include <gtk/gtk.h>
 
 #include "util.h"
@@ -213,7 +214,7 @@ static void daemonize(void) {
 	else if(pid != 0) exit(EXIT_SUCCESS);
 }
 
-void exec_command(const gchar *command) {
+static void exec_command(const gchar *command) {
 	GError *err = NULL;
 
 	g_spawn_command_line_async(command, &err);
@@ -221,6 +222,11 @@ void exec_command(const gchar *command) {
 		g_warning("Executing `%s` failed: %s", command, err->message);
 		g_error_free(err);
 	}
+}
+
+static gboolean signal_handler(gpointer data) {
+	g_application_quit(G_APPLICATION(gtklock->app));
+	return G_SOURCE_REMOVE;
 }
 
 int main(int argc, char **argv) {
@@ -333,6 +339,7 @@ int main(int argc, char **argv) {
 
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 	g_signal_connect(gtklock->app, "shutdown", G_CALLBACK(shutdown), NULL);
+	g_unix_signal_add(SIGTERM, G_SOURCE_FUNC(signal_handler), NULL);
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
 
 	gtklock_destroy(gtklock);
