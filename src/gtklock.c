@@ -45,13 +45,13 @@ void gtklock_update_clocks(struct GtkLock *gtklock) {
 static int gtklock_update_clocks_handler(gpointer data) {
 	struct GtkLock *gtklock = (struct GtkLock *)data;
 	gtklock_update_clocks(gtklock);
-	return TRUE;
+	return G_SOURCE_CONTINUE;
 }
 
 static int gtklock_idle_handler(gpointer data) {
 	struct GtkLock *gtklock = (struct GtkLock *)data;
 	gtklock_idle_hide(gtklock);
-	return TRUE;
+	return G_SOURCE_CONTINUE;
 }
 
 void gtklock_idle_hide(struct GtkLock *gtklock) {
@@ -79,7 +79,7 @@ void gtklock_idle_show(struct GtkLock *gtklock) {
 
 	if(!gtklock->use_idle_hide) return;
 	if(gtklock->idle_hide_source > 0) g_source_remove(gtklock->idle_hide_source);
-	gtklock->idle_hide_source = g_timeout_add_seconds(gtklock->idle_timeout, gtklock_idle_handler, gtklock);
+	gtklock->idle_hide_source = g_timeout_add_seconds(gtklock->idle_timeout, G_SOURCE_FUNC(gtklock_idle_handler), gtklock);
 }
 
 #if GLIB_CHECK_VERSION(2, 74, 0)
@@ -99,10 +99,10 @@ struct GtkLock* create_gtklock(void) {
 }
 
 void gtklock_activate(struct GtkLock *gtklock) {
-	gtklock->draw_clock_source = g_timeout_add(1000, gtklock_update_clocks_handler, gtklock);
+	gtklock->draw_clock_source = g_timeout_add(1000, G_SOURCE_FUNC(gtklock_update_clocks_handler), gtklock);
 	gtklock_update_clocks(gtklock);
 	if(gtklock->use_idle_hide) gtklock->idle_hide_source =
-		g_timeout_add_seconds(gtklock->idle_timeout, gtklock_idle_handler, gtklock);
+		g_timeout_add_seconds(gtklock->idle_timeout, G_SOURCE_FUNC(gtklock_idle_handler), gtklock);
 	if(gtklock->use_layer_shell) g_application_hold(G_APPLICATION(gtklock->app));
 	if(gtklock->use_input_inhibit) input_inhibitor_get();
 }
