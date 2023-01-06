@@ -1,5 +1,5 @@
 // gtklock
-// Copyright (c) 2022 William Wold, Jovan Lanik
+// Copyright (c) 2022 Sophie Winter, Jovan Lanik
 
 // wlr-input-inhibitor
 
@@ -63,7 +63,7 @@ void input_inhibitor_destroy(void) {
 
 MIT License
 
-Copyright (c) 2020 William Wold
+Copyright (c) 2020 Sophie Winter
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
