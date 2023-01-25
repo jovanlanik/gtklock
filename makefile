@@ -6,7 +6,7 @@
 NAME := gtklock
 MAJOR_VERSION := 2
 MINOR_VERSION := 0
-MICRO_VERSION := 0
+MICRO_VERSION := 1
 
 PREFIX = /usr/local
 INSTALL = install
