@@ -40,6 +40,7 @@
 								<property name="visibility">False</property>
 								<property name="caps-lock-warning">False</property>
 								<property name="input-purpose">password</property>
+								<property name="secondary-icon-name">view-reveal-symbolic</property>
 								<signal name="icon-release" handler="window_pw_toggle_vis"/>
 								<signal name="activate" handler="window_pw_check"/>
 							</object>
