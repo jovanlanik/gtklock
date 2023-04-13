@@ -12,13 +12,12 @@
 				<property name="name">clock-label</property>
 				<property name="halign">center</property>
 				<property name="margin-bottom">10</property>
-				<property name="label"></property>
 			</object>
 		</child>
 		<child>
 			<object class="GtkRevealer" id="body-revealer">
 				<property name="transition-type">none</property>
-				<property name="reveal-child">True</property>
+				<property name="reveal-child">1</property>
 				<child>
 					<object class="GtkGrid" id="body-grid">
 						<property name="row-spacing">5</property>
@@ -37,8 +36,8 @@
 							<object class="GtkEntry" id="input-field">
 								<property name="name">input-field</property>
 								<property name="width-request">380</property>
-								<property name="visibility">False</property>
-								<property name="caps-lock-warning">False</property>
+								<property name="visibility">0</property>
+								<property name="caps-lock-warning">0</property>
 								<property name="input-purpose">password</property>
 								<property name="secondary-icon-name">view-reveal-symbolic</property>
 								<signal name="icon-release" handler="window_pw_toggle_vis"/>
@@ -52,7 +51,7 @@
 						</child>
 						<child>
 							<object class="GtkBox" id="message-box">
-								<property name="no-show-all">True</property>
+								<property name="no-show-all">1</property>
 							</object>
 							<packing>
 								<property name="left-attach">1</property>
@@ -67,21 +66,17 @@
 								<child>
 									<object class="GtkLabel" id="warning-label">
 										<property name="name">warning-label</property>
-										<property name="label"></property>
 									</object>
 								</child>
 								<child>
 									<object class="GtkLabel" id="error-label">
 										<property name="name">error-label</property>
-										<property name="label"></property>
 									</object>
 								</child>
 								<child>
 									<object class="GtkButton" id="unlock-button">
 										<property name="name">unlock-button</property>
 										<property name="label">Unlock</property>
-										<property name="can-focus">False</property>
-										<property name="receives-default">False</property>
 										<style>
 											<class name="suggested-action"/>
 										</style>
