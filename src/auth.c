@@ -99,7 +99,8 @@ static void auth_child(const char *s, int *err, int *out) {
 	int ret = pam_authenticate((pam_handle_t *)handle, 0);
 	pam_status = ret;
 	pam_status = pam_setcred((pam_handle_t *)handle, PAM_REFRESH_CRED);
-	if(pam_end(handle, pam_status) != PAM_SUCCESS) fprintf(stderr, "pam_end() failed");
+	if(pam_end(handle, pam_status) != PAM_SUCCESS)
+		fprintf(stderr, "pam_end() failed");
 	if(ret == PAM_SUCCESS) exit(EXIT_SUCCESS);
 	exit(EXIT_FAILURE);
 }

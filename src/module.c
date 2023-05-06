@@ -54,8 +54,10 @@ GModule *module_load(const char *name) {
 	gboolean has_major = g_module_symbol(module, "module_major_version", (gpointer *)&major);
 	gboolean has_minor = g_module_symbol(module, "module_minor_version", (gpointer *)&minor);
 	if(has_major && has_minor) {
-		if(*major != MAJOR_VERSION) report_error_and_exit("%s: module has mismatched major version (%u), is incompatible", name, *major);
-		else if(*minor != MINOR_VERSION) g_warning("%s: module has mismatched minor version (%u), may be incompatible", name, *minor);
+		if(*major != MAJOR_VERSION)
+			report_error_and_exit("%s: module has mismatched major version (%u), is incompatible", name, *major);
+		else if(*minor != MINOR_VERSION)
+			g_warning("%s: module has mismatched minor version (%u), may be incompatible", name, *minor);
 	}
 	else {
 		const gchar *gtklock_version = "v" STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MICRO_VERSION);
