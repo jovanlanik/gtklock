@@ -1,7 +1,7 @@
 // gtklock
 // Copyright (c) 2022 Kenny Levinsen, Jovan Lanik
 
-#define _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
 #include <signal.h>
