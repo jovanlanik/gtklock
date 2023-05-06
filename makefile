@@ -11,21 +11,27 @@ MICRO_VERSION := 1
 PREFIX = /usr/local
 INSTALL = install
 
-LIBS := pam wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-export-2.0
+LIBS := wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-export-2.0
+
+PAMFLAGS := $(shell pkg-config --cflags pam)
+PAMLIBS := $(shell pkg-config --libs pam)
+ifneq '$(.SHELLSTATUS)' '0'
+	PAMLIBS := -lpam
+endif
 
 PKGFLAGS := $(shell pkg-config --cflags $(LIBS))
 ifneq '$(.SHELLSTATUS)' '0'
-$(error pkg-config failed)
+	$(error pkg-config failed)
 endif
 
 PKGLIBS := $(shell pkg-config --libs $(LIBS))
 ifneq '$(.SHELLSTATUS)' '0'
-$(error pkg-config failed)
+	$(error pkg-config failed)
 endif
 
-CFLAGS += -std=c11 -Iinclude -DPREFIX=$(PREFIX) $(PKGFLAGS)
+CFLAGS += -std=c11 -Iinclude -DPREFIX=$(PREFIX) $(PAMFLAGS) $(PKGFLAGS)
 CFLAGS += -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DMICRO_VERSION=$(MICRO_VERSION)
-LDLIBS += -Wl,--export-dynamic $(PKGLIBS)
+LDLIBS += -Wl,--export-dynamic $(PAMLIBS) $(PKGLIBS)
 
 OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o
 OBJ += $(patsubst %.c, %.o, $(wildcard src/*.c))
