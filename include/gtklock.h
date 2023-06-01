@@ -29,6 +29,7 @@ struct GtkLock {
 	char *time;
 	char *time_format;
 	char *config_path;
+	char *layout_path;
 
 	GArray *modules;
 };

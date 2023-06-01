@@ -47,6 +47,7 @@ static gint idle_timeout = 15;
 static gchar *gtk_theme = NULL;
 static gchar *config_path = NULL;
 static gchar *style_path = NULL;
+static gchar *layout_path = NULL;
 static gchar **module_path = NULL;
 static gchar *background_path = NULL;
 static gchar *time_format = NULL;
@@ -63,6 +64,7 @@ static GOptionEntry main_entries[] = {
 static GOptionEntry config_entries[] = {
 	{ "gtk-theme", 'g', 0, G_OPTION_ARG_STRING, &gtk_theme, "Set GTK theme", NULL },
 	{ "style", 's', 0, G_OPTION_ARG_FILENAME, &style_path, "Load CSS style file", NULL },
+	{ "layout", 'x', 0, G_OPTION_ARG_FILENAME, &layout_path, "Load XML layout file", NULL },
 	{ "modules", 'm', 0, G_OPTION_ARG_FILENAME_ARRAY, &module_path, "Load gtklock modules", NULL },
 	{ "background", 'b', 0, G_OPTION_ARG_FILENAME, &background_path, "Load background", NULL },
 	{ "time-format", 't', 0, G_OPTION_ARG_STRING, &time_format, "Set time format", NULL },
@@ -336,6 +338,7 @@ int main(int argc, char **argv) {
 
 	gtklock->time_format = time_format;
 	gtklock->config_path = config_path;
+	gtklock->layout_path = layout_path;
 
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 	g_signal_connect(gtklock->app, "shutdown", G_CALLBACK(shutdown), NULL);

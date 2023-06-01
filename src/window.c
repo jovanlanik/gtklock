@@ -322,7 +322,10 @@ struct Window *create_window(GdkMonitor *monitor) {
 	w->overlay = gtk_overlay_new();
 	gtk_container_add(GTK_CONTAINER(w->window), w->overlay);
 	
-	GtkBuilder *builder = gtk_builder_new_from_resource("/gtklock/gtklock.ui");
+	GtkBuilder *builder = NULL;
+	if(gtklock->layout_path) builder = gtk_builder_new_from_file(gtklock->layout_path);
+	else builder = gtk_builder_new_from_resource("/gtklock/gtklock.ui");
+	
 	gtk_builder_connect_signals(builder, w);
 
 	w->window_box = GTK_WIDGET(gtk_builder_get_object(builder, "window-box"));
