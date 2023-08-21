@@ -8,31 +8,34 @@ MAJOR_VERSION := 3
 MINOR_VERSION := 0
 MICRO_VERSION := 0
 
-PREFIX = /usr/local
-SYSCONFDIR = $(PREFIX)/etc
+PREFIX ?= /usr/local
 
-ifeq '$(shell uname)' 'Linux'
-	SYSCONFDIR = /etc
+ifeq ($(origin SYSCONFDIR), undefined)
+        ifeq '$(shell uname)' 'Linux'
+                SYSCONFDIR = /etc
+        else
+                SYSCONFDIR = $(PREFIX)/etc
+        endif
 endif
 
-INSTALL = install
+INSTALL ?= install
 
 LIBS := wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-export-2.0
 
 PAMFLAGS := $(shell pkg-config --cflags pam)
 PAMLIBS := $(shell pkg-config --libs pam)
 ifneq '$(.SHELLSTATUS)' '0'
-	PAMLIBS := -lpam
+        PAMLIBS := -lpam
 endif
 
 PKGFLAGS := $(shell pkg-config --cflags $(LIBS))
 ifneq '$(.SHELLSTATUS)' '0'
-	$(error pkg-config failed)
+        $(error pkg-config failed)
 endif
 
 PKGLIBS := $(shell pkg-config --libs $(LIBS))
 ifneq '$(.SHELLSTATUS)' '0'
-	$(error pkg-config failed)
+        $(error pkg-config failed)
 endif
 
 CFLAGS += -std=c11 -Iinclude -DPREFIX=$(PREFIX) $(PAMFLAGS) $(PKGFLAGS)
