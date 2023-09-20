@@ -150,7 +150,7 @@ static void activate(GtkApplication *app, gpointer user_data) {
 		struct Window *win = create_window(NULL);
 		gtklock_focus_window(gtklock, win);
 	}
-	if(parent > 0) kill(parent, SIGINT);
+	if(parent > 0) kill(parent, SIGUSR1);
 }
 
 static void shutdown(GtkApplication *app, gpointer user_data) {
@@ -205,8 +205,16 @@ static void daemonize(void) {
 	else if(pid != 0) {
 		int status;
 		waitpid(pid, &status, 0);
-		if(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS)
-			exit(EXIT_SUCCESS);
+		if(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS) {
+			sigset_t set;
+			sigemptyset(&set);
+			sigaddset(&set, SIGUSR1);
+			sigprocmask(SIG_BLOCK, &set, NULL);
+			int ret = sigtimedwait(&set, NULL, &(struct timespec){ 1, 0 });
+			if(ret == SIGUSR1)
+				exit(EXIT_SUCCESS);
+			exit(EXIT_FAILURE);
+		}
 		report_error_and_exit("Failed to daemonize!\n");
 	}
 
