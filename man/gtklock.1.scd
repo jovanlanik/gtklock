@@ -60,6 +60,9 @@ All available options are:
 *-S, --start-hidden*
 	Start with input form hidden.
 
+*-p, --try-pam-on-launch*
+	Automatically start authentication.
+
 *-L, --lock-command*
 	Command to execute before locking. Command is executed asynchronously.
 

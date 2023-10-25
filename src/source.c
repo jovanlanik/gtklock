@@ -41,6 +41,7 @@ static gboolean no_layer_shell = FALSE;
 static gboolean no_input_inhibit = FALSE;
 static gboolean idle_hide = FALSE;
 static gboolean start_hidden = FALSE;
+static gboolean try_pam_on_launch = FALSE;
 
 static gint idle_timeout = 15;
 
@@ -73,6 +74,7 @@ static GOptionEntry config_entries[] = {
 	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
 	{ "lock-command", 'L', 0, G_OPTION_ARG_STRING, &lock_command, "Command to execute before locking", NULL },
 	{ "unlock-command", 'U', 0, G_OPTION_ARG_STRING, &unlock_command, "Command to execute after unlocking", NULL },
+	{ "try-pam-on-launch", 'p', 0, G_OPTION_ARG_NONE, &try_pam_on_launch, "Automatically start authentication", NULL },
 	{ NULL },
 };
 
@@ -309,6 +311,7 @@ int main(int argc, char **argv) {
 	gtklock->use_idle_hide = idle_hide;
 	gtklock->idle_timeout = (guint)idle_timeout;
 	gtklock->hidden = start_hidden;
+	gtklock->try_pam_on_launch = try_pam_on_launch;
 
 	if(background_path != NULL) {
 		GFile *file = g_file_new_for_path(background_path);
