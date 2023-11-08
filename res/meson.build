@@ -1,6 +1,6 @@
  gnome = import('gnome')
 
-uiresources = gnome.compile_resources(
-  'uiresources', 'ui.gresource.xml',
+ui_resources = gnome.compile_resources(
+  'ui-resources', 'ui.gresource.xml',
   c_name : 'ui',
 )

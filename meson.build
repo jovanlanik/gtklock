@@ -32,7 +32,7 @@ subdir('wayland')
 
 gtklock_set = [
   gtklock_sources,
-  uiresources,
+  ui_resources,
   wayland_sources,
 ]
 
