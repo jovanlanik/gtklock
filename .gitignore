@@ -1,9 +1,1 @@
-/build/
-/.cache/
-/gtklock
-/gtklock.1
-compile_flags.txt
-compile_commands.json
-*-client-protocol.h
-*-client-protocol.c
-*.o
+/builddir/
