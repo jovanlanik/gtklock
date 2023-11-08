@@ -26,6 +26,8 @@ struct GtkLock {
 	gboolean use_input_inhibit;
 	gboolean use_idle_hide;
 
+	gboolean try_pam_on_launch;
+
 	char *time;
 	char *time_format;
 	char *config_path;

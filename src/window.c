@@ -8,6 +8,7 @@
 
 #include <gtk/gtk.h>
 #include <gtk-layer-shell.h>
+#include <unistd.h>
 
 #include "util.h"
 #include "window.h"
@@ -140,7 +141,9 @@ static void window_set_busy(struct Window *ctx, gboolean busy) {
 	g_object_unref(cursor);
 
 	gtk_widget_set_sensitive(ctx->unlock_button, !busy);
-	gtk_widget_set_sensitive(ctx->input_field, !busy);
+    if (gtklock->try_pam_on_launch) {
+        gtk_widget_set_sensitive(ctx->input_field, !busy);
+    }
 }
 
 static gboolean window_pw_failure(gpointer data) {
@@ -191,7 +194,10 @@ static gpointer window_pw_wait(gpointer data) {
 }
 
 void window_pw_check(GtkWidget *widget, gpointer data) {
-	struct Window *ctx = data;
+	if (gtklock->try_pam_on_launch) {
+		sleep(3); // Sleep long enough for the system to suspend
+	}
+    struct Window *ctx = data;
 	window_set_busy(ctx, TRUE);
 	gtk_label_set_text(GTK_LABEL(ctx->error_label), NULL);
 	g_thread_new(NULL, window_pw_wait, ctx);
@@ -356,6 +362,10 @@ struct Window *create_window(GdkMonitor *monitor) {
 	gtk_widget_show_all(w->window);
 
 	g_object_unref(builder);
+
+	if (gtklock->try_pam_on_launch) {
+        window_pw_check(NULL, w);
+    }
 	return w;
 }
 
