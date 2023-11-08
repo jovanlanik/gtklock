@@ -20,20 +20,21 @@ Available on these repositories:
 ❤️ __Please submit an installation command for your distro!__
 ## Building from source
 ```
-$ make
-# make install
+$ meson setup builddir
+$ ninja -C builddir
+# meson install -C builddir
 ```
 ### Dependencies
-- GNU Make (build-time)
+- Meson (build-time)
 - pkg-config (build-time)
-- scdoc (build-time)
+- scdoc (optional, build-time)
 - PAM
 - wayland-client
 - gtk+3.0
 - gtk-layer-shell
 ### Install dependencies
-- Arch: `# pacman -S gcc make pkgconf scdoc pam wayland gtk3 gtk-layer-shell`
-- Fedora: `# dnf install gcc make pkgconf scdoc pam-devel wayland-devel gtk3-devel gtk-layer-shell-devel`
-- Void: `# xbps-install gcc make pkgconf scdoc pam-devel wayland-devel gtk+3-devel gtk-layer-shell-devel`
+- Arch: `# pacman -S gcc meson pkgconf scdoc pam wayland gtk3 gtk-layer-shell`
+- Fedora: `# dnf install gcc meson pkgconf scdoc pam-devel wayland-devel gtk3-devel gtk-layer-shell-devel`
+- Void: `# xbps-install gcc meson pkgconf scdoc pam-devel wayland-devel gtk+3-devel gtk-layer-shell-devel`
 
 ❤️ __Please submit an dependency installation command for your distro!__
