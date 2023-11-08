@@ -33,6 +33,12 @@ struct Window *window_by_monitor(GdkMonitor *monitor) {
 	return NULL;
 }
 
+struct Window *window_last_active(void) {
+	GtkWindow *window = gtk_application_get_active_window(gtklock->app);
+	if(window) return window_by_widget(GTK_WIDGET(window));
+	return NULL;
+}
+
 static gboolean window_enter_notify(GtkWidget *widget, gpointer data) {
 	struct Window *win = window_by_widget(widget);
 	gtk_entry_grab_focus_without_selecting(GTK_ENTRY(win->input_field));

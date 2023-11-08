@@ -30,6 +30,7 @@ struct Window {
 
 struct Window *window_by_widget(GtkWidget *window);
 struct Window *window_by_monitor(GdkMonitor *monitor);
+struct Window *window_last_active(void);
 struct Window *create_window(GdkMonitor *monitor);
 void window_idle_hide(struct Window *win);
 void window_idle_show(struct Window *win);
