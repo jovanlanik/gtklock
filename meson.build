@@ -1,3 +1,6 @@
+# gtklock
+# Copyright (c) 2023 Jianhua Lu, Jovan Lanik
+
 project(
   'gtklock', 'c',
   version : '3.0.0',

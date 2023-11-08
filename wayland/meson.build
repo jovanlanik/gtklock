@@ -1,3 +1,6 @@
+# gtklock
+# Copyright (c) 2023 Jianhua Lu, Jovan Lanik
+
 wayland_scanner = find_program('wayland-scanner')
 
 gen_wayland_protocol_c = generator(

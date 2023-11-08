@@ -1,3 +1,6 @@
+# gtklock
+# Copyright (c) 2023 Jianhua Lu, Jovan Lanik
+
 scdoc = find_program('scdoc', required: get_option('man-pages'))
 
 if scdoc.found()
