@@ -10,7 +10,6 @@
 #include <gtk/gtk.h>
 
 #include "util.h"
-#include "auth.h"
 #include "window.h"
 #include "gtklock.h"
 #include "config.h"
@@ -37,8 +36,6 @@ struct GtkLock *gtklock = NULL;
 
 static gboolean show_version = FALSE;
 static gboolean should_daemonize = FALSE;
-static gboolean no_layer_shell = FALSE;
-static gboolean no_input_inhibit = FALSE;
 static gboolean idle_hide = FALSE;
 static gboolean start_hidden = FALSE;
 
@@ -77,83 +74,23 @@ static GOptionEntry config_entries[] = {
 };
 
 static GOptionEntry debug_entries[] = {
-	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL },
-	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL },
 	{ NULL },
 };
 
 static pid_t parent = -2;
 
-static void reload_outputs(void) {
-	GdkDisplay *display = gdk_display_get_default();
-
-	// Make note of all existing windows
-	GArray *dead_windows = g_array_new(FALSE, TRUE, sizeof(struct Window*));
-	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
-		struct Window *ctx = g_array_index(gtklock->windows, struct Window*, idx);
-		g_array_append_val(dead_windows, ctx);
-	}
-
-	// Go through all monitors
-	struct Window *any_window = NULL;
-	for(int i = 0; i < gdk_display_get_n_monitors(display); i++) {
-		GdkMonitor *monitor = gdk_display_get_monitor(display, i);
-		struct Window *w = window_by_monitor(monitor);
-		if(w != NULL) {
-			// We already have this monitor, remove from dead_windows list
-			for(guint idx = 0; idx < dead_windows->len; idx++) {
-				if(w == g_array_index(dead_windows, struct Window*, idx)) {
-					g_array_remove_index_fast(dead_windows, idx);
-					break;
-				}
-			}
-		} else {
-			w = create_window(monitor);
-			gtklock_focus_window(gtklock, w);
-		}
-		any_window = w;
-	}
-
-	// Remove all windows left behind
-	for(guint idx = 0; idx < dead_windows->len; idx++) {
-		struct Window *w = g_array_index(dead_windows, struct Window*, idx);
-		if(gtklock->focused_window == w) {
-			gtklock->focused_window = NULL;
-			if(any_window) window_swap_focus(any_window, w);
-		}
-		gtk_widget_destroy(w->window);
-	}
-
-	g_array_unref(dead_windows);
-	module_on_output_change(gtklock);
-}
-
-static void monitors_added(GdkDisplay *display, GdkMonitor *monitor, gpointer user_data) {
-	reload_outputs();
-}
-
-static void monitors_removed(GdkDisplay *display, GdkMonitor *monitor, gpointer user_data) {
-	reload_outputs();
-}
-
-static gboolean setup_layer_shell(void) {
-	if(!gtklock->use_layer_shell) return FALSE;
-
-	reload_outputs();
-
-	GdkDisplay *display = gdk_display_get_default();
-	g_signal_connect(display, "monitor-added", G_CALLBACK(monitors_added), NULL);
-	g_signal_connect(display, "monitor-removed", G_CALLBACK(monitors_removed), NULL);
-	return TRUE;
-}
-
 static void activate(GtkApplication *app, gpointer user_data) {
 	gtklock_activate(gtklock);
 	module_on_activation(gtklock);
-	if(!setup_layer_shell()) {
-		struct Window *win = create_window(NULL);
-		gtklock_focus_window(gtklock, win);
+
+	struct Window *any_window = NULL;
+	GdkDisplay *display = gdk_display_get_default();
+	for(int i = 0; i < gdk_display_get_n_monitors(display); ++i) {
+		GdkMonitor *monitor = gdk_display_get_monitor(gdk_display_get_default(), i);
+		any_window = create_window(monitor);
 	}
+	gtklock_focus_window(gtklock, any_window);
+
 	if(parent > 0) kill(parent, SIGUSR1);
 }
 
@@ -308,8 +245,6 @@ int main(int argc, char **argv) {
 	}
 
 	gtklock = create_gtklock();
-	gtklock->use_layer_shell = !no_layer_shell;
-	gtklock->use_input_inhibit = !no_input_inhibit;
 	gtklock->use_idle_hide = idle_hide;
 	gtklock->idle_timeout = (guint)idle_timeout;
 	gtklock->hidden = start_hidden;

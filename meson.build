@@ -14,7 +14,7 @@ minor_version = version[1]
 micro_version = version[2]
 
 gtk = dependency('gtk+-3.0')
-gtk_layer_shell = dependency('gtk-layer-shell-0')
+gtk_layer_shell = dependency('gtk-session-lock-0')
 gmodule_export = dependency('gmodule-export-2.0')
 pam = dependency('pam')
 wayland_client = dependency('wayland-client')

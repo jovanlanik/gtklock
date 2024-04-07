@@ -7,7 +7,7 @@
 #include <assert.h>
 
 #include <gtk/gtk.h>
-#include <gtk-layer-shell.h>
+#include <gtk-session-lock.h>
 
 #include "util.h"
 #include "window.h"
@@ -54,15 +54,6 @@ static void window_setup_layer_shell(struct Window *ctx) {
 	}
 	ctx->enter_notify_handler = g_signal_connect(ctx->window, "enter-notify-event", G_CALLBACK(window_enter_notify), NULL);
 
-	gtk_layer_init_for_window(GTK_WINDOW(ctx->window));
-	gtk_layer_set_layer(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_LAYER_OVERLAY);
-	gtk_layer_set_monitor(GTK_WINDOW(ctx->window), ctx->monitor);
-	gtk_layer_set_exclusive_zone(GTK_WINDOW(ctx->window), -1);
-	gtk_layer_set_keyboard_mode(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_KEYBOARD_MODE_EXCLUSIVE);
-	gtk_layer_set_anchor(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_EDGE_LEFT, TRUE);
-	gtk_layer_set_anchor(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_EDGE_RIGHT, TRUE);
-	gtk_layer_set_anchor(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_EDGE_TOP, TRUE);
-	gtk_layer_set_anchor(GTK_WINDOW(ctx->window), GTK_LAYER_SHELL_EDGE_BOTTOM, TRUE);
 }
 
 void window_update_clock(struct Window *ctx) {
@@ -219,17 +210,11 @@ static void window_destroy_notify(GtkWidget *widget, gpointer data) {
 void window_swap_focus(struct Window *win, struct Window *old) {
 	if(!gtklock->hidden) gtk_revealer_set_reveal_child(GTK_REVEALER(win->body_revealer), TRUE);
 
-	if(gtklock->use_layer_shell)
-		gtk_layer_set_keyboard_mode(GTK_WINDOW(win->window), GTK_LAYER_SHELL_KEYBOARD_MODE_EXCLUSIVE);
-
 	GtkStyleContext *win_context = gtk_widget_get_style_context(win->window);
 	gtk_style_context_add_class(win_context, "focused");
 
 	if(old != NULL && old != win) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(old->body_revealer), FALSE);
-
-		if(gtklock->use_layer_shell)
-			gtk_layer_set_keyboard_mode(GTK_WINDOW(old->window), GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
 
 		GtkStyleContext *old_context = gtk_widget_get_style_context(old->window);
 		gtk_style_context_remove_class(old_context, "focused");
@@ -323,7 +308,7 @@ struct Window *create_window(GdkMonitor *monitor) {
 	gtk_window_set_title(GTK_WINDOW(w->window), "Lockscreen");
 	gtk_window_set_decorated(GTK_WINDOW(w->window), FALSE);
 	gtk_widget_realize(w->window);
-	if(gtklock->use_layer_shell) window_setup_layer_shell(w);
+	gtk_session_lock_lock_new_surface(gtklock->lock, GTK_WINDOW(w->window), monitor);
 
 	w->overlay = gtk_overlay_new();
 	gtk_container_add(GTK_CONTAINER(w->window), w->overlay);
