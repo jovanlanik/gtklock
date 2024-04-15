@@ -23,8 +23,6 @@ struct Window {
 	GtkWidget *warning_label;
 	GtkWidget *clock_label;
 
-	gulong enter_notify_handler;
-
 	void *module_data[];
 };
 

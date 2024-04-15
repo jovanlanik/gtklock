@@ -79,12 +79,36 @@ static GOptionEntry debug_entries[] = {
 
 static pid_t parent = -2;
 
+static void monitors_added(GdkDisplay *display, GdkMonitor *monitor, gpointer user_data) {
+	if(window_by_monitor(monitor) == NULL) create_window(monitor);
+	module_on_output_change(gtklock);
+}
+
+static void monitors_removed(GdkDisplay *display, GdkMonitor *monitor, gpointer user_data) {
+	struct Window *w = window_by_monitor(monitor);
+	if(w != NULL) {
+		if(gtklock->focused_window == w) {
+			struct Window *any_window = g_array_index(gtklock->windows, struct Window*, 0);
+			if(any_window == w) any_window = g_array_index(gtklock->windows, struct Window*, 1);
+
+			gtklock->focused_window = NULL;
+			if(any_window) window_swap_focus(any_window, w);
+		}
+		gtk_session_lock_unmap_lock_window(GTK_WINDOW(w->window));
+		gtk_widget_destroy(w->window);
+	}
+	module_on_output_change(gtklock);
+}
+
 static void activate(GtkApplication *app, gpointer user_data) {
 	gtklock_activate(gtklock);
 	module_on_activation(gtklock);
 
 	struct Window *any_window = NULL;
 	GdkDisplay *display = gdk_display_get_default();
+	g_signal_connect(display, "monitor-added", G_CALLBACK(monitors_added), NULL);
+	g_signal_connect(display, "monitor-removed", G_CALLBACK(monitors_removed), NULL);
+
 	for(int i = 0; i < gdk_display_get_n_monitors(display); ++i) {
 		GdkMonitor *monitor = gdk_display_get_monitor(gdk_display_get_default(), i);
 		any_window = create_window(monitor);

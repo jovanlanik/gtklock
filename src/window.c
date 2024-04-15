@@ -4,7 +4,6 @@
 // Window functions
 
 #include <time.h>
-#include <assert.h>
 
 #include <gtk/gtk.h>
 #include <gtk-session-lock.h>
@@ -37,23 +36,6 @@ struct Window *window_last_active(void) {
 	GtkWindow *window = gtk_application_get_active_window(gtklock->app);
 	if(window) return window_by_widget(GTK_WIDGET(window));
 	return NULL;
-}
-
-static gboolean window_enter_notify(GtkWidget *widget, gpointer data) {
-	struct Window *win = window_by_widget(widget);
-	gtk_entry_grab_focus_without_selecting(GTK_ENTRY(win->input_field));
-	gtklock_focus_window(gtklock, win);
-	return FALSE;
-}
-
-static void window_setup_layer_shell(struct Window *ctx) {
-	gtk_widget_add_events(ctx->window, GDK_ENTER_NOTIFY_MASK);
-	if(ctx->enter_notify_handler > 0) {
-		g_signal_handler_disconnect(ctx->window, ctx->enter_notify_handler);
-		ctx->enter_notify_handler = 0;
-	}
-	ctx->enter_notify_handler = g_signal_connect(ctx->window, "enter-notify-event", G_CALLBACK(window_enter_notify), NULL);
-
 }
 
 void window_update_clock(struct Window *ctx) {
@@ -236,6 +218,8 @@ void window_swap_focus(struct Window *win, struct Window *old) {
 			window_pw_set_vis(GTK_ENTRY(win->input_field), gtk_entry_get_visibility(GTK_ENTRY(old->input_field)));
 		}
 	}
+
+	gtk_entry_grab_focus_without_selecting(GTK_ENTRY(win->input_field));
 }
 
 void window_idle_hide(struct Window *ctx) {
@@ -282,6 +266,7 @@ struct Window *create_window(GdkMonitor *monitor) {
 
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
 	if(gtklock->use_idle_hide || gtklock->hidden) {
+		gtk_widget_add_events(w->window, GDK_POINTER_MOTION_MASK);
 		g_signal_connect(w->window, "key-press-event", G_CALLBACK(window_idle_key), NULL);
 		g_signal_connect(w->window, "motion-notify-event", G_CALLBACK(window_idle_motion), NULL);
 	}
