@@ -60,12 +60,11 @@ GModule *module_load(const char *name) {
 			g_warning("%s: module has mismatched minor version (%u), may be incompatible", name, *minor);
 	}
 	else {
-		const gchar *gtklock_version = "v" STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MICRO_VERSION);
 		const gchar *module_version = NULL;
-		if(g_module_symbol(module, "module_version", (gpointer *)&module_version)) {
-			if(g_strcmp0(gtklock_version, module_version) != 0)
-				g_warning("%s: module has mismatched version, may be incompatible", name);
-		} else g_warning("%s: module has no version info, may be incompatible", name);
+		if(g_module_symbol(module, "module_version", (gpointer *)&module_version))
+			report_error_and_exit("%s: module has legacy version info (%s), is incompatible", name, module_version);
+		else
+			report_error_and_exit("%s: module has no version info, is incompatible", name);
 	}
 
 	return module;
