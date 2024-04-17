@@ -98,6 +98,8 @@ struct GtkLock* create_gtklock(void) {
 }
 
 void gtklock_activate(struct GtkLock *gtklock) {
+	g_application_hold(G_APPLICATION(gtklock->app));
+
 	if(!gtk_session_lock_is_supported())
 		report_error_and_exit("Your compositor doesn't support ext-session-lock");
 	gtklock->lock = gtk_session_lock_prepare_lock();

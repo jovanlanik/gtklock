@@ -81,7 +81,9 @@ static GOptionEntry debug_entries[] = {
 static pid_t parent = -2;
 
 static void monitors_added(GdkDisplay *display, GdkMonitor *monitor, gpointer user_data) {
-	if(window_by_monitor(monitor) == NULL) create_window(monitor);
+	struct Window *w = NULL;
+	if(window_by_monitor(monitor) == NULL) w = create_window(monitor);
+	if(w == g_array_index(gtklock->windows, struct Window*, 0)) gtklock_focus_window(gtklock, w);
 	module_on_output_change(gtklock);
 }
 
