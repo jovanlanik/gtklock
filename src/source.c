@@ -100,6 +100,15 @@ static void monitors_removed(GdkDisplay *display, GdkMonitor *monitor, gpointer 
 	module_on_output_change(gtklock);
 }
 
+static void exec_command(const gchar *command) {
+	GError *err = NULL;
+	g_spawn_command_line_async(command, &err);
+	if(err != NULL) {
+		g_warning("Executing `%s` failed: %s", command, err->message);
+		g_error_free(err);
+	}
+}
+
 static void activate(GtkApplication *app, gpointer user_data) {
 	gtklock_activate(gtklock);
 	module_on_activation(gtklock);
@@ -116,6 +125,7 @@ static void activate(GtkApplication *app, gpointer user_data) {
 	gtklock_focus_window(gtklock, any_window);
 
 	if(parent > 0) kill(parent, SIGUSR1);
+	if(lock_command) exec_command(lock_command);
 }
 
 static void shutdown(GtkApplication *app, gpointer user_data) {
@@ -124,6 +134,7 @@ static void shutdown(GtkApplication *app, gpointer user_data) {
 		g_module_close(module);
 	}
 	gtklock_shutdown(gtklock);
+	if(unlock_command) exec_command(unlock_command);
 }
 
 static void attach_style(const gchar *format, ...) G_GNUC_PRINTF(1, 2);
@@ -189,16 +200,6 @@ static void daemonize(void) {
 	else if(pid != 0) exit(EXIT_SUCCESS);
 }
 
-static void exec_command(const gchar *command) {
-	GError *err = NULL;
-
-	g_spawn_command_line_async(command, &err);
-	if(err != NULL) {
-		g_warning("Executing `%s` failed: %s", command, err->message);
-		g_error_free(err);
-	}
-}
-
 static gboolean signal_handler(gpointer data) {
 	g_application_quit(G_APPLICATION(gtklock->app));
 	return G_SOURCE_REMOVE;
@@ -261,8 +262,6 @@ int main(int argc, char **argv) {
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
 		report_error_and_exit("Option parsing failed: %s\n", error->message);
 
-	if(lock_command) exec_command(lock_command);
-
 	if(gtk_theme) {
 		GtkSettings *settings = gtk_settings_get_default();
 		g_object_set(settings, "gtk-theme-name", gtk_theme, NULL);
@@ -317,7 +316,6 @@ int main(int argc, char **argv) {
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
 
 	gtklock_destroy(gtklock);
-	if(unlock_command) exec_command(unlock_command);
 	return status;
 }
 
