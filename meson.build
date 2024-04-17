@@ -14,28 +14,24 @@ minor_version = version[1]
 micro_version = version[2]
 
 gtk = dependency('gtk+-3.0')
-gtk_layer_shell = dependency('gtk-session-lock-0')
+gtk_session_lock = dependency('gtk-session-lock-0')
 gmodule_export = dependency('gmodule-export-2.0')
 pam = dependency('pam')
-wayland_client = dependency('wayland-client')
 
 dependencies = [
   gtk,
-  gtk_layer_shell,
+  gtk_session_lock,
   gmodule_export,
   pam,
-  wayland_client,
 ]
 
 subdir('man')
 subdir('res')
 subdir('src')
-subdir('wayland')
 
 gtklock_set = [
   gtklock_sources,
   ui_resources,
-  wayland_sources,
 ]
 
 executable(
