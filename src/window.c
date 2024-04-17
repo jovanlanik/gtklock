@@ -50,7 +50,7 @@ static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) 
 	for(guint idx = 0; idx < gtklock->errors->len; idx++) {
 		char *err = g_array_index(gtklock->errors, char *, idx);
 		if(err == data) {
-			g_array_remove_index_fast(gtklock->errors, idx);
+			g_array_remove_index(gtklock->errors, idx);
 			g_free(err);
 			window_setup_messages(ctx);
 			return;
@@ -59,7 +59,7 @@ static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) 
 	for(guint idx = 0; idx < gtklock->messages->len; idx++) {
 		char *msg = g_array_index(gtklock->messages, char *, idx);
 		if(msg == data) {
-			g_array_remove_index_fast(gtklock->messages, idx);
+			g_array_remove_index(gtklock->messages, idx);
 			g_free(msg);
 			window_setup_messages(ctx);
 			return;
