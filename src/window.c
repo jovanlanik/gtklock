@@ -226,6 +226,9 @@ void window_idle_hide(struct Window *ctx) {
 	GtkStyleContext *context = gtk_widget_get_style_context(ctx->window);
 	gtk_style_context_add_class(context, "hidden");
 	gtk_revealer_set_reveal_child(GTK_REVEALER(ctx->body_revealer), FALSE);
+	GdkCursor *cursor = gdk_cursor_new_for_display(gtk_widget_get_display(ctx->window), GDK_BLANK_CURSOR);
+	gdk_window_set_cursor(gtk_widget_get_window(ctx->window), cursor);
+	g_object_unref(cursor);
 }
 
 void window_idle_show(struct Window *ctx) {
@@ -235,6 +238,9 @@ void window_idle_show(struct Window *ctx) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(ctx->body_revealer), TRUE);
 		gtk_entry_grab_focus_without_selecting(GTK_ENTRY(ctx->input_field));
 	}
+	GdkCursor *cursor = gdk_cursor_new_from_name(gtk_widget_get_display(ctx->window), "default");
+	gdk_window_set_cursor(gtk_widget_get_window(ctx->window), cursor);
+	g_object_unref(cursor);
 }
 
 static gboolean window_idle_key(GtkWidget *self, GdkEventKey event, gpointer user_data) {
