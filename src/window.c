@@ -289,7 +289,10 @@ struct Window *create_window(GdkMonitor *monitor) {
 	GdkKeymap *keymap = gdk_keymap_get_for_display(display);
 	g_signal_connect(keymap, "state-changed", G_CALLBACK(window_caps_state_changed), NULL);
 
-	if(name) gtk_widget_set_name(w->window, name);
+	if(name) {
+		gtk_widget_set_name(w->window, name);
+		g_free(name);
+	}
 	gtk_window_set_title(GTK_WINDOW(w->window), "Lockscreen");
 	gtk_window_set_decorated(GTK_WINDOW(w->window), FALSE);
 	gtk_widget_realize(w->window);

@@ -3,7 +3,6 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include <assert.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <glib-unix.h>
@@ -50,6 +49,7 @@ static gchar *background_path = NULL;
 static gchar *time_format = NULL;
 static gchar *lock_command = NULL;
 static gchar *unlock_command = NULL;
+static gchar **monitor_priority = NULL;
 
 static GOptionEntry main_entries[] = {
 	{ "version", 'v', 0, G_OPTION_ARG_NONE, &show_version, "Show version", NULL },
@@ -70,6 +70,7 @@ static GOptionEntry config_entries[] = {
 	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
 	{ "lock-command", 'L', 0, G_OPTION_ARG_STRING, &lock_command, "Command to execute before locking", NULL },
 	{ "unlock-command", 'U', 0, G_OPTION_ARG_STRING, &unlock_command, "Command to execute after unlocking", NULL },
+	{ "monitor-priority", 'M', 0, G_OPTION_ARG_STRING_ARRAY, &monitor_priority, "Monitor focus priority", NULL },
 	{ NULL },
 };
 
@@ -109,20 +110,77 @@ static void exec_command(const gchar *command) {
 	}
 }
 
+static gboolean find_priority_monitor(char *name) {
+	if(monitor_priority) {
+		for(guint i = 0; monitor_priority[i] != NULL; ++i)
+			if(g_strcmp0(name, monitor_priority[i]) == 0) return TRUE;
+	}
+	return FALSE;
+}
+
+static gint compare_priority_monitors(gconstpointer first_ptr, gconstpointer second_ptr, gpointer user_data) {
+	const void *first = *(const void **)first_ptr;
+	const void *second = *(const void **)second_ptr;
+	if(first != second && monitor_priority) {
+		GHashTable *names = user_data;
+		char *first_name = g_hash_table_lookup(names, first);
+		char *second_name = g_hash_table_lookup(names, second);
+		gint first_index = -1;
+		gint second_index = -1;
+		for(guint i = 0; monitor_priority[i] != NULL; ++i) {
+			if(g_strcmp0(first_name, monitor_priority[i]) != 0) continue;
+			first_index = i;
+			break;
+		}
+		for(guint i = 0; monitor_priority[i] != NULL; ++i) {
+			if(g_strcmp0(second_name, monitor_priority[i]) != 0) continue;
+			second_index = i;
+			break;
+		}
+		return first_index - second_index;
+	}
+	return 0;
+}
+
+// See comment in window.c
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 static void activate(GtkApplication *app, gpointer user_data) {
 	gtklock_activate(gtklock);
 	module_on_activation(gtklock);
 
-	struct Window *any_window = NULL;
 	GdkDisplay *display = gdk_display_get_default();
 	g_signal_connect(display, "monitor-added", G_CALLBACK(monitors_added), NULL);
 	g_signal_connect(display, "monitor-removed", G_CALLBACK(monitors_removed), NULL);
 
+	GArray *monitors = g_array_new(FALSE, TRUE, sizeof(GdkMonitor *));
+	GArray *priority_monitors = g_array_new(FALSE, TRUE, sizeof(GdkMonitor *));
+	GHashTable *priority_monitor_names = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_free);
+
 	for(int i = 0; i < gdk_display_get_n_monitors(display); ++i) {
-		GdkMonitor *monitor = gdk_display_get_monitor(gdk_display_get_default(), i);
-		any_window = create_window(monitor);
+		char *name = gdk_screen_get_monitor_plug_name(gdk_screen_get_default(), i);
+		GdkMonitor *monitor = gdk_display_get_monitor(display, i);
+
+		if(find_priority_monitor(name)) {
+			g_hash_table_insert(priority_monitor_names, monitor, name);
+			g_array_append_val(priority_monitors, monitor);
+		} else {
+			g_array_append_val(monitors, monitor);
+			g_free(name);
+		}
 	}
-	gtklock_focus_window(gtklock, any_window);
+
+	g_array_sort_with_data(priority_monitors, compare_priority_monitors, priority_monitor_names);
+	gsize len;
+	gpointer data = g_array_steal(priority_monitors, &len);
+	g_array_prepend_vals(monitors, data, len);
+
+	for(guint idx = 0; idx < monitors->len; idx++) create_window(g_array_index(monitors, GdkMonitor *, idx));
+	gtklock_focus_window(gtklock, g_array_index(gtklock->windows, struct Window *, 0));
+
+	g_array_unref(monitors);
+	g_array_unref(priority_monitors);
+	g_hash_table_unref(priority_monitor_names);
 
 	if(parent > 0) kill(parent, SIGUSR1);
 	if(lock_command) exec_command(lock_command);
