@@ -68,7 +68,7 @@ static GOptionEntry config_entries[] = {
 	{ "idle-hide", 'H', 0, G_OPTION_ARG_NONE, &idle_hide, "Hide form when idle", NULL },
 	{ "idle-timeout", 'T', 0, G_OPTION_ARG_INT, &idle_timeout, "Idle timeout in seconds", NULL },
 	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
-	{ "lock-command", 'L', 0, G_OPTION_ARG_STRING, &lock_command, "Command to execute before locking", NULL },
+	{ "lock-command", 'L', 0, G_OPTION_ARG_STRING, &lock_command, "Command to execute after locking", NULL },
 	{ "unlock-command", 'U', 0, G_OPTION_ARG_STRING, &unlock_command, "Command to execute after unlocking", NULL },
 	{ "monitor-priority", 'M', 0, G_OPTION_ARG_STRING_ARRAY, &monitor_priority, "Monitor focus priority", NULL },
 	{ NULL },
