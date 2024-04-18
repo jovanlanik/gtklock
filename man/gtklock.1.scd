@@ -39,6 +39,9 @@ All available options are:
 *-s, --style* <path>
 	Load CSS style file.
 
+*-x, --layout* <path>
+	Load XML layout file.
+
 *-m, --modules* <name>
 	Load gtklock modules. Module name can be an absolute path, relative path
 	(starting with ./ or ../) or name in system directory (such as
@@ -61,10 +64,13 @@ All available options are:
 	Start with input form hidden.
 
 *-L, --lock-command*
-	Command to execute before locking. Command is executed asynchronously.
+	Command to execute after locking. Command is executed asynchronously.
 
 *-U, --unlock-command*
 	Command to execute after unlocking. Command is executed asynchronously.
+
+*-M, --monitor-priority* <name>
+	Set monitor focus priority. Option can be specified multiple times.
 
 # EXAMPLE
 
