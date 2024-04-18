@@ -3,14 +3,12 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include <assert.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <glib-unix.h>
 #include <gtk/gtk.h>
 
 #include "util.h"
-#include "auth.h"
 #include "window.h"
 #include "gtklock.h"
 #include "config.h"
@@ -37,8 +35,6 @@ struct GtkLock *gtklock = NULL;
 
 static gboolean show_version = FALSE;
 static gboolean should_daemonize = FALSE;
-static gboolean no_layer_shell = FALSE;
-static gboolean no_input_inhibit = FALSE;
 static gboolean idle_hide = FALSE;
 static gboolean start_hidden = FALSE;
 
@@ -53,6 +49,7 @@ static gchar *background_path = NULL;
 static gchar *time_format = NULL;
 static gchar *lock_command = NULL;
 static gchar *unlock_command = NULL;
+static gchar **monitor_priority = NULL;
 
 static GOptionEntry main_entries[] = {
 	{ "version", 'v', 0, G_OPTION_ARG_NONE, &show_version, "Show version", NULL },
@@ -73,88 +70,122 @@ static GOptionEntry config_entries[] = {
 	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
 	{ "lock-command", 'L', 0, G_OPTION_ARG_STRING, &lock_command, "Command to execute before locking", NULL },
 	{ "unlock-command", 'U', 0, G_OPTION_ARG_STRING, &unlock_command, "Command to execute after unlocking", NULL },
+	{ "monitor-priority", 'M', 0, G_OPTION_ARG_STRING_ARRAY, &monitor_priority, "Monitor focus priority", NULL },
 	{ NULL },
 };
 
 static GOptionEntry debug_entries[] = {
-	{ "no-layer-shell", 'l', 0, G_OPTION_ARG_NONE, &no_layer_shell, "Don't use wlr-layer-shell", NULL },
-	{ "no-input-inhibit", 'i', 0, G_OPTION_ARG_NONE, &no_input_inhibit, "Don't use wlr-input-inhibitor", NULL },
 	{ NULL },
 };
 
 static pid_t parent = -2;
 
-static void reload_outputs(void) {
-	GdkDisplay *display = gdk_display_get_default();
-
-	// Make note of all existing windows
-	GArray *dead_windows = g_array_new(FALSE, TRUE, sizeof(struct Window*));
-	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
-		struct Window *ctx = g_array_index(gtklock->windows, struct Window*, idx);
-		g_array_append_val(dead_windows, ctx);
-	}
-
-	// Go through all monitors
-	struct Window *any_window = NULL;
-	for(int i = 0; i < gdk_display_get_n_monitors(display); i++) {
-		GdkMonitor *monitor = gdk_display_get_monitor(display, i);
-		struct Window *w = window_by_monitor(monitor);
-		if(w != NULL) {
-			// We already have this monitor, remove from dead_windows list
-			for(guint idx = 0; idx < dead_windows->len; idx++) {
-				if(w == g_array_index(dead_windows, struct Window*, idx)) {
-					g_array_remove_index_fast(dead_windows, idx);
-					break;
-				}
-			}
-		} else {
-			w = create_window(monitor);
-			gtklock_focus_window(gtklock, w);
-		}
-		any_window = w;
-	}
-
-	// Remove all windows left behind
-	for(guint idx = 0; idx < dead_windows->len; idx++) {
-		struct Window *w = g_array_index(dead_windows, struct Window*, idx);
-		if(gtklock->focused_window == w) {
-			gtklock->focused_window = NULL;
-			if(any_window) window_swap_focus(any_window, w);
-		}
-		gtk_widget_destroy(w->window);
-	}
-
-	g_array_unref(dead_windows);
+static void monitors_added(GdkDisplay *display, GdkMonitor *monitor, gpointer user_data) {
+	struct Window *w = NULL;
+	if(window_by_monitor(monitor) == NULL) w = create_window(monitor);
+	if(w == g_array_index(gtklock->windows, struct Window*, 0)) gtklock_focus_window(gtklock, w);
 	module_on_output_change(gtklock);
 }
 
-static void monitors_added(GdkDisplay *display, GdkMonitor *monitor, gpointer user_data) {
-	reload_outputs();
-}
-
 static void monitors_removed(GdkDisplay *display, GdkMonitor *monitor, gpointer user_data) {
-	reload_outputs();
+	struct Window *w = window_by_monitor(monitor);
+	if(w != NULL) {
+		if(gtklock->focused_window == w) {
+			struct Window *any_window = g_array_index(gtklock->windows, struct Window*, 0);
+			if(any_window == w) any_window = g_array_index(gtklock->windows, struct Window*, 1);
+
+			gtklock->focused_window = NULL;
+			if(any_window) window_swap_focus(any_window, w);
+		}
+		gtk_session_lock_unmap_lock_window(GTK_WINDOW(w->window));
+		gtk_widget_destroy(w->window);
+	}
+	module_on_output_change(gtklock);
 }
 
-static gboolean setup_layer_shell(void) {
-	if(!gtklock->use_layer_shell) return FALSE;
-
-	reload_outputs();
-
-	GdkDisplay *display = gdk_display_get_default();
-	g_signal_connect(display, "monitor-added", G_CALLBACK(monitors_added), NULL);
-	g_signal_connect(display, "monitor-removed", G_CALLBACK(monitors_removed), NULL);
-	return TRUE;
+static void exec_command(const gchar *command) {
+	GError *err = NULL;
+	g_spawn_command_line_async(command, &err);
+	if(err != NULL) {
+		g_warning("Executing `%s` failed: %s", command, err->message);
+		g_error_free(err);
+	}
 }
+
+static gboolean find_priority_monitor(char *name) {
+	if(monitor_priority) {
+		for(guint i = 0; monitor_priority[i] != NULL; ++i)
+			if(g_strcmp0(name, monitor_priority[i]) == 0) return TRUE;
+	}
+	return FALSE;
+}
+
+static gint compare_priority_monitors(gconstpointer first_ptr, gconstpointer second_ptr, gpointer user_data) {
+	const void *first = *(const void **)first_ptr;
+	const void *second = *(const void **)second_ptr;
+	if(first != second && monitor_priority) {
+		GHashTable *names = user_data;
+		char *first_name = g_hash_table_lookup(names, first);
+		char *second_name = g_hash_table_lookup(names, second);
+		gint first_index = -1;
+		gint second_index = -1;
+		for(guint i = 0; monitor_priority[i] != NULL; ++i) {
+			if(g_strcmp0(first_name, monitor_priority[i]) != 0) continue;
+			first_index = i;
+			break;
+		}
+		for(guint i = 0; monitor_priority[i] != NULL; ++i) {
+			if(g_strcmp0(second_name, monitor_priority[i]) != 0) continue;
+			second_index = i;
+			break;
+		}
+		return first_index - second_index;
+	}
+	return 0;
+}
+
+// See comment in window.c
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 static void activate(GtkApplication *app, gpointer user_data) {
 	gtklock_activate(gtklock);
 	module_on_activation(gtklock);
-	if(!setup_layer_shell()) {
-		struct Window *win = create_window(NULL);
-		gtklock_focus_window(gtklock, win);
+
+	GdkDisplay *display = gdk_display_get_default();
+	g_signal_connect(display, "monitor-added", G_CALLBACK(monitors_added), NULL);
+	g_signal_connect(display, "monitor-removed", G_CALLBACK(monitors_removed), NULL);
+
+	GArray *monitors = g_array_new(FALSE, TRUE, sizeof(GdkMonitor *));
+	GArray *priority_monitors = g_array_new(FALSE, TRUE, sizeof(GdkMonitor *));
+	GHashTable *priority_monitor_names = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_free);
+
+	for(int i = 0; i < gdk_display_get_n_monitors(display); ++i) {
+		char *name = gdk_screen_get_monitor_plug_name(gdk_screen_get_default(), i);
+		GdkMonitor *monitor = gdk_display_get_monitor(display, i);
+
+		if(find_priority_monitor(name)) {
+			g_hash_table_insert(priority_monitor_names, monitor, name);
+			g_array_append_val(priority_monitors, monitor);
+		} else {
+			g_array_append_val(monitors, monitor);
+			g_free(name);
+		}
 	}
+
+	g_array_sort_with_data(priority_monitors, compare_priority_monitors, priority_monitor_names);
+	gsize len;
+	gpointer data = g_array_steal(priority_monitors, &len);
+	g_array_prepend_vals(monitors, data, len);
+
+	for(guint idx = 0; idx < monitors->len; idx++) create_window(g_array_index(monitors, GdkMonitor *, idx));
+	gtklock_focus_window(gtklock, g_array_index(gtklock->windows, struct Window *, 0));
+
+	g_array_unref(monitors);
+	g_array_unref(priority_monitors);
+	g_hash_table_unref(priority_monitor_names);
+
 	if(parent > 0) kill(parent, SIGUSR1);
+	if(lock_command) exec_command(lock_command);
 }
 
 static void shutdown(GtkApplication *app, gpointer user_data) {
@@ -163,6 +194,7 @@ static void shutdown(GtkApplication *app, gpointer user_data) {
 		g_module_close(module);
 	}
 	gtklock_shutdown(gtklock);
+	if(unlock_command) exec_command(unlock_command);
 }
 
 static void attach_style(const gchar *format, ...) G_GNUC_PRINTF(1, 2);
@@ -228,16 +260,6 @@ static void daemonize(void) {
 	else if(pid != 0) exit(EXIT_SUCCESS);
 }
 
-static void exec_command(const gchar *command) {
-	GError *err = NULL;
-
-	g_spawn_command_line_async(command, &err);
-	if(err != NULL) {
-		g_warning("Executing `%s` failed: %s", command, err->message);
-		g_error_free(err);
-	}
-}
-
 static gboolean signal_handler(gpointer data) {
 	g_application_quit(G_APPLICATION(gtklock->app));
 	return G_SOURCE_REMOVE;
@@ -300,16 +322,12 @@ int main(int argc, char **argv) {
 	if(!g_option_context_parse(option_context, &argc, &argv, &error))
 		report_error_and_exit("Option parsing failed: %s\n", error->message);
 
-	if(lock_command) exec_command(lock_command);
-
 	if(gtk_theme) {
 		GtkSettings *settings = gtk_settings_get_default();
 		g_object_set(settings, "gtk-theme-name", gtk_theme, NULL);
 	}
 
 	gtklock = create_gtklock();
-	gtklock->use_layer_shell = !no_layer_shell;
-	gtklock->use_input_inhibit = !no_input_inhibit;
 	gtklock->use_idle_hide = idle_hide;
 	gtklock->idle_timeout = (guint)idle_timeout;
 	gtklock->hidden = start_hidden;
@@ -358,7 +376,6 @@ int main(int argc, char **argv) {
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
 
 	gtklock_destroy(gtklock);
-	if(unlock_command) exec_command(unlock_command);
 	return status;
 }
 

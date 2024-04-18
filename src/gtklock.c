@@ -9,13 +9,12 @@
 #include "window.h"
 #include "gtklock.h"
 #include "module.h"
-#include "input-inhibitor.h"
 
 void gtklock_remove_window(struct GtkLock *gtklock, struct Window *win) {
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
 		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
 		if(ctx == win) {
-			g_array_remove_index_fast(gtklock->windows, idx);
+			g_array_remove_index(gtklock->windows, idx);
 			g_free(ctx);
 			return;
 		}
@@ -99,12 +98,17 @@ struct GtkLock* create_gtklock(void) {
 }
 
 void gtklock_activate(struct GtkLock *gtklock) {
+	g_application_hold(G_APPLICATION(gtklock->app));
+
+	if(!gtk_session_lock_is_supported())
+		report_error_and_exit("Your compositor doesn't support ext-session-lock");
+	gtklock->lock = gtk_session_lock_prepare_lock();
+	gtk_session_lock_lock_lock(gtklock->lock);
+
 	gtklock->draw_clock_source = g_timeout_add(1000, G_SOURCE_FUNC(gtklock_update_clocks_handler), gtklock);
 	gtklock_update_clocks(gtklock);
 	if(gtklock->use_idle_hide) gtklock->idle_hide_source =
 		g_timeout_add_seconds(gtklock->idle_timeout, G_SOURCE_FUNC(gtklock_idle_handler), gtklock);
-	if(gtklock->use_layer_shell) g_application_hold(G_APPLICATION(gtklock->app));
-	if(gtklock->use_input_inhibit) input_inhibitor_get();
 }
 
 void gtklock_shutdown(struct GtkLock *gtklock) {
@@ -116,7 +120,8 @@ void gtklock_shutdown(struct GtkLock *gtklock) {
 		g_source_remove(gtklock->idle_hide_source);
 		gtklock->idle_hide_source = 0;
 	}
-	if(gtklock->use_input_inhibit) input_inhibitor_destroy();
+	gtk_session_lock_lock_unlock_and_destroy(gtklock->lock);
+	gdk_display_sync(gdk_display_get_default());
 }
 
 void gtklock_destroy(struct GtkLock *gtklock) {

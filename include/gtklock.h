@@ -6,11 +6,14 @@
 #pragma once
 
 #include <gtk/gtk.h>
+#include <gtk-session-lock.h>
 
 struct Window;
 
 struct GtkLock {
 	GtkApplication *app;
+	GtkSessionLockLock *lock;
+
 	GArray *windows;
 	GArray *messages;
 	GArray *errors;
@@ -22,8 +25,6 @@ struct GtkLock {
 	guint draw_clock_source;
 	guint idle_hide_source;
 
-	gboolean use_layer_shell;
-	gboolean use_input_inhibit;
 	gboolean use_idle_hide;
 
 	char *time;
