@@ -34,6 +34,6 @@ $ ninja -C builddir
 ### Installing build dependencies
 - Arch: `# yay -S gcc meson pkgconf scdoc pam wayland gtk3 gtk-session-lock`
 - Fedora: `# dnf install gcc meson pkgconf scdoc pam-devel wayland-devel gtk3-devel`, install gtk-session-lock manually
-- Void: `# xbps-install gcc meson pkgconf scdoc pam-devel wayland-devel gtk+3-devel`, install gtk-session-lock manually
+- Void: `# xbps-install gcc meson pkgconf scdoc pam-devel wayland-devel gtk+3-devel gtk-session-lock-devel`
 
 ❤️ __Please submit an dependency installation command for your distro!__
