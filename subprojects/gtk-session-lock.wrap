@@ -1,0 +1,8 @@
+[wrap-git]
+directory = gtk-session-lock
+url = https://github.com/Cu3PO42/gtk-session-lock
+revision = b3544f361498d716b1ceef1ad6ac9bdf024bf782
+
+[provide]
+dependency_names = gtk-session-lock-0
+gtk-session-lock-0 = gtk_session_lock
