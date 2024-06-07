@@ -252,12 +252,17 @@ static gboolean window_idle_motion(GtkWidget *self, GdkEventMotion event, gpoint
 	return FALSE;
 }
 
-void window_caps_state_changed(GdkKeymap *self, gpointer user_data) {
+static void window_caps_state_changed(GdkKeymap *self, gpointer user_data) {
 	struct Window *w = gtklock->focused_window;
 	if(!w || !w->warning_label) return;
 
 	if(gdk_keymap_get_caps_lock_state(self)) gtk_label_set_text(GTK_LABEL(w->warning_label), "Caps Lock is on");
 	else gtk_label_set_text(GTK_LABEL(w->warning_label), "");
+}
+
+static gboolean entry_button_press(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+	if(event->button != 1) return TRUE;
+	return FALSE;
 }
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -321,6 +326,7 @@ struct Window *create_window(GdkMonitor *monitor) {
 	w->input_label = GTK_WIDGET(gtk_builder_get_object(builder, "input-label"));
 
 	w->input_field = GTK_WIDGET(gtk_builder_get_object(builder, "input-field"));
+	g_signal_connect(w->input_field, "button-press-event", G_CALLBACK(entry_button_press), NULL);
 
 	w->message_box = GTK_WIDGET(gtk_builder_get_object(builder, "message-box"));
 	w->unlock_button = GTK_WIDGET(gtk_builder_get_object(builder, "unlock-button"));
