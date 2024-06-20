@@ -23,12 +23,15 @@ struct GtkLock {
 	guint idle_timeout;
 
 	guint draw_clock_source;
+	guint draw_date_source;
 	guint idle_hide_source;
 
 	gboolean use_idle_hide;
 
 	char *time;
+	char *date;
 	char *time_format;
+	char *date_format;
 	char *config_path;
 	char *layout_path;
 
@@ -38,6 +41,7 @@ struct GtkLock {
 void gtklock_remove_window(struct GtkLock *gtklock, struct Window *win);
 void gtklock_focus_window(struct GtkLock *gtklock, struct Window *win);
 void gtklock_update_clocks(struct GtkLock *gtklock);
+void gtklock_update_dates(struct GtkLock *gtklock);
 void gtklock_idle_hide(struct GtkLock *gtklock);
 void gtklock_idle_show(struct GtkLock *gtklock);
 struct GtkLock *create_gtklock(void);

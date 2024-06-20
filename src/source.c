@@ -47,6 +47,7 @@ static gchar *layout_path = NULL;
 static gchar **module_path = NULL;
 static gchar *background_path = NULL;
 static gchar *time_format = NULL;
+static gchar *date_format = NULL;
 static gchar *lock_command = NULL;
 static gchar *unlock_command = NULL;
 static gchar **monitor_priority = NULL;
@@ -65,6 +66,7 @@ static GOptionEntry config_entries[] = {
 	{ "modules", 'm', 0, G_OPTION_ARG_FILENAME_ARRAY, &module_path, "Load gtklock modules", NULL },
 	{ "background", 'b', 0, G_OPTION_ARG_FILENAME, &background_path, "Load background", NULL },
 	{ "time-format", 't', 0, G_OPTION_ARG_STRING, &time_format, "Set time format", NULL },
+	{ "date-format", 'd', 0, G_OPTION_ARG_STRING, &date_format, "Set date format", NULL },
 	{ "idle-hide", 'H', 0, G_OPTION_ARG_NONE, &idle_hide, "Hide form when idle", NULL },
 	{ "idle-timeout", 'T', 0, G_OPTION_ARG_INT, &idle_timeout, "Idle timeout in seconds", NULL },
 	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
@@ -347,8 +349,15 @@ int main(int argc, char **argv) {
 	}
 
 	attach_style(
-		"window #clock-label {"
+		"* {"
+		"font-family: 'Big-John'"
+		"}"
+		"#clock-label {"
 		"font-size: 96pt;"
+		"}"
+		"#date-label {"
+		"font-size: 30px;"
+		"font-weight: 700;"
 		"}"
 		"window.focused:not(.hidden) #clock-label {"
 		"font-size: 32pt;"
@@ -367,6 +376,7 @@ int main(int argc, char **argv) {
 	gtklock->modules = modules;
 
 	gtklock->time_format = time_format;
+	gtklock->date_format = date_format;
 	gtklock->config_path = config_path;
 	gtklock->layout_path = layout_path;
 

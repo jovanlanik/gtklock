@@ -47,6 +47,25 @@ static int gtklock_update_clocks_handler(gpointer data) {
 	return G_SOURCE_CONTINUE;
 }
 
+void gtklock_update_dates(struct GtkLock *gtklock) {
+	GDateTime *date = g_date_time_new_now_local();
+	if(date == NULL) return;
+	if(gtklock->date) g_free(gtklock->date);
+	gtklock->date = g_date_time_format(date, gtklock->date_format ? gtklock->date_format : "%a, %d %b %Y");
+	g_date_time_unref(date);
+
+	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
+		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
+		window_update_date(ctx);
+	}
+}
+
+static int gtklock_update_dates_handler(gpointer data) {
+	struct GtkLock *gtklock = (struct GtkLock *)data;
+	gtklock_update_dates(gtklock);
+	return G_SOURCE_CONTINUE;
+}
+
 static int gtklock_idle_handler(gpointer data) {
 	struct GtkLock *gtklock = (struct GtkLock *)data;
 	gtklock_idle_hide(gtklock);
@@ -107,6 +126,8 @@ void gtklock_activate(struct GtkLock *gtklock) {
 
 	gtklock->draw_clock_source = g_timeout_add(1000, G_SOURCE_FUNC(gtklock_update_clocks_handler), gtklock);
 	gtklock_update_clocks(gtklock);
+	gtklock->draw_date_source = g_timeout_add(18000000, G_SOURCE_FUNC(gtklock_update_dates_handler), gtklock);
+	gtklock_update_dates(gtklock);
 	if(gtklock->use_idle_hide) gtklock->idle_hide_source =
 		g_timeout_add_seconds(gtklock->idle_timeout, G_SOURCE_FUNC(gtklock_idle_handler), gtklock);
 }

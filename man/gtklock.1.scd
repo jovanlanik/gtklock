@@ -54,6 +54,9 @@ All available options are:
 *-t, --time-format* <string>
 	Set time format. See date(1).
 
+*-d, --date-format* <string>
+	Set date format. See date(1).
+
 *-H, --idle-hide*
 	Hide input form when idle.
 

@@ -22,6 +22,7 @@ struct Window {
 	GtkWidget *error_label;
 	GtkWidget *warning_label;
 	GtkWidget *clock_label;
+	GtkWidget *date_label;
 
 	void *module_data[];
 };
@@ -33,5 +34,6 @@ struct Window *create_window(GdkMonitor *monitor);
 void window_idle_hide(struct Window *win);
 void window_idle_show(struct Window *win);
 void window_update_clock(struct Window *ctx);
+void window_update_date(struct Window *ctx);
 void window_swap_focus(struct Window *win, struct Window *old);
 

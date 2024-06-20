@@ -15,6 +15,13 @@
 			</object>
 		</child>
 		<child>
+			<object class="GtkLabel" id="date-label">
+				<property name="name">date-label</property>
+				<property name="halign">start</property>
+				<property name="margin-bottom">10</property>
+			</object>
+		</child>
+		<child>
 			<object class="GtkRevealer" id="body-revealer">
 				<property name="transition-type">none</property>
 				<property name="reveal-child">0</property>

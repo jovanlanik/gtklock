@@ -42,6 +42,10 @@ void window_update_clock(struct Window *ctx) {
 	gtk_label_set_text(GTK_LABEL(ctx->clock_label), gtklock->time);
 }
 
+void window_update_date(struct Window *ctx) {
+	gtk_label_set_text(GTK_LABEL(ctx->date_label), gtklock->date);
+}
+
 static void window_setup_messages(struct Window *ctx);
 
 static void window_close_message(GtkInfoBar *bar, gint response, gpointer data) {
@@ -335,6 +339,9 @@ struct Window *create_window(GdkMonitor *monitor) {
 
 	w->clock_label = GTK_WIDGET(gtk_builder_get_object(builder, "clock-label"));
 	window_update_clock(w);
+
+	w->date_label = GTK_WIDGET(gtk_builder_get_object(builder, "date-label"));
+	window_update_date(w);
 
 	if(gtklock->hidden) window_idle_hide(w);
 	module_on_window_create(gtklock, w);
