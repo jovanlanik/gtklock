@@ -148,15 +148,15 @@ enum pwcheck auth_pw_check(const char *s) {
 	size_t len;
 	ssize_t nread;
 	nread = read(err_pipe[PIPE_PARENT], &len, sizeof(size_t));
-	if(nread > 0) {
-		error_string = malloc(len+1);
+	if(nread > 0 && len <= PAM_MAX_MSG_SIZE) {
+		error_string = malloc(PAM_MAX_MSG_SIZE);
 		nread = read(err_pipe[PIPE_PARENT], error_string, len);
 		error_string[nread] = '\0';
 		return PW_ERROR;
 	}
 	nread = read(out_pipe[PIPE_PARENT], &len, sizeof(size_t));
-	if(nread > 0) {
-		message_string = malloc(len+1);
+	if(nread > 0 && len <= PAM_MAX_MSG_SIZE) {
+		message_string = malloc(PAM_MAX_MSG_SIZE);
 		nread = read(out_pipe[PIPE_PARENT], message_string, len);
 		message_string[nread] = '\0';
 		return PW_MESSAGE;
