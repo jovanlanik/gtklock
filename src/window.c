@@ -269,6 +269,13 @@ static gboolean entry_button_press(GtkWidget *widget, GdkEventButton *event, gpo
 	return FALSE;
 }
 
+static gboolean window_enter_notify(GtkWidget *widget, gpointer data) {
+	struct Window *win = window_by_widget(widget);
+	gtk_entry_grab_focus_without_selecting(GTK_ENTRY(win->input_field));
+	gtklock_focus_window(gtklock, win);
+	return FALSE;
+}
+
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 struct Window *create_window(GdkMonitor *monitor) {
@@ -280,6 +287,8 @@ struct Window *create_window(GdkMonitor *monitor) {
 	w->window = gtk_application_window_new(gtklock->app);
 
 	g_signal_connect(w->window, "destroy", G_CALLBACK(window_destroy_notify), NULL);
+	if(gtklock->follow_focus)
+		g_signal_connect(w->window, "enter-notify-event", G_CALLBACK(window_enter_notify), NULL);
 	if(gtklock->use_idle_hide || gtklock->hidden) {
 		gtk_widget_add_events(w->window, GDK_POINTER_MOTION_MASK);
 		g_signal_connect(w->window, "key-press-event", G_CALLBACK(window_idle_key), NULL);

@@ -35,6 +35,7 @@ struct GtkLock *gtklock = NULL;
 
 static gboolean show_version = FALSE;
 static gboolean should_daemonize = FALSE;
+static gboolean follow_focus = FALSE;
 static gboolean idle_hide = FALSE;
 static gboolean start_hidden = FALSE;
 
@@ -66,7 +67,8 @@ static GOptionEntry config_entries[] = {
 	{ "modules", 'm', 0, G_OPTION_ARG_FILENAME_ARRAY, &module_path, "Load gtklock modules", NULL },
 	{ "background", 'b', 0, G_OPTION_ARG_FILENAME, &background_path, "Load background", NULL },
 	{ "time-format", 't', 0, G_OPTION_ARG_STRING, &time_format, "Set time format", NULL },
-	{ "date-format", 'd', 0, G_OPTION_ARG_STRING, &date_format, "Set date format", NULL },
+	{ "date-format", 'D', 0, G_OPTION_ARG_STRING, &date_format, "Set date format", NULL },
+	{ "follow-focus", 'f', 0, G_OPTION_ARG_NONE, &follow_focus, "Follow focus between monitors", NULL },
 	{ "idle-hide", 'H', 0, G_OPTION_ARG_NONE, &idle_hide, "Hide form when idle", NULL },
 	{ "idle-timeout", 'T', 0, G_OPTION_ARG_INT, &idle_timeout, "Idle timeout in seconds", NULL },
 	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
@@ -330,6 +332,7 @@ int main(int argc, char **argv) {
 	}
 
 	gtklock = create_gtklock();
+	gtklock->follow_focus = follow_focus;
 	gtklock->use_idle_hide = idle_hide;
 	gtklock->idle_timeout = (guint)idle_timeout;
 	gtklock->hidden = start_hidden;

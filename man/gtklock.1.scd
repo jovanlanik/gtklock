@@ -57,6 +57,10 @@ All available options are:
 *-d, --date-format* <string>
 	Set date format. See date(1).
 
+*-f, --follow-focus*
+	Follow focus between monitors. May not work for all compositors,
+	recommended for hyprland.
+
 *-H, --idle-hide*
 	Hide input form when idle.
 
