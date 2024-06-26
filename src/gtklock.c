@@ -41,17 +41,11 @@ void gtklock_update_clocks(struct GtkLock *gtklock) {
 	}
 }
 
-static int gtklock_update_clocks_handler(gpointer data) {
-	struct GtkLock *gtklock = (struct GtkLock *)data;
-	gtklock_update_clocks(gtklock);
-	return G_SOURCE_CONTINUE;
-}
-
 void gtklock_update_dates(struct GtkLock *gtklock) {
 	GDateTime *date = g_date_time_new_now_local();
 	if(date == NULL) return;
 	if(gtklock->date) g_free(gtklock->date);
-	gtklock->date = g_date_time_format(date, gtklock->date_format ? gtklock->date_format : "%a, %d %b %Y");
+	gtklock->date = g_date_time_format(date, gtklock->date_format ? gtklock->date_format : "%a, %b %d");
 	g_date_time_unref(date);
 
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
@@ -60,8 +54,9 @@ void gtklock_update_dates(struct GtkLock *gtklock) {
 	}
 }
 
-static int gtklock_update_dates_handler(gpointer data) {
+static int gtklock_update_time_handler(gpointer data) {
 	struct GtkLock *gtklock = (struct GtkLock *)data;
+	gtklock_update_clocks(gtklock);
 	gtklock_update_dates(gtklock);
 	return G_SOURCE_CONTINUE;
 }
@@ -124,18 +119,17 @@ void gtklock_activate(struct GtkLock *gtklock) {
 	gtklock->lock = gtk_session_lock_prepare_lock();
 	gtk_session_lock_lock_lock(gtklock->lock);
 
-	gtklock->draw_clock_source = g_timeout_add(1000, G_SOURCE_FUNC(gtklock_update_clocks_handler), gtklock);
+	gtklock->draw_time_source = g_timeout_add(1000, G_SOURCE_FUNC(gtklock_update_time_handler), gtklock);
 	gtklock_update_clocks(gtklock);
-	gtklock->draw_date_source = g_timeout_add(18000000, G_SOURCE_FUNC(gtklock_update_dates_handler), gtklock);
 	gtklock_update_dates(gtklock);
 	if(gtklock->use_idle_hide) gtklock->idle_hide_source =
 		g_timeout_add_seconds(gtklock->idle_timeout, G_SOURCE_FUNC(gtklock_idle_handler), gtklock);
 }
 
 void gtklock_shutdown(struct GtkLock *gtklock) {
-	if(gtklock->draw_clock_source > 0) {
-		g_source_remove(gtklock->draw_clock_source);
-		gtklock->draw_clock_source = 0;
+	if(gtklock->draw_time_source > 0) {
+		g_source_remove(gtklock->draw_time_source);
+		gtklock->draw_time_source = 0;
 	}
 	if(gtklock->idle_hide_source > 0) {
 		g_source_remove(gtklock->idle_hide_source);

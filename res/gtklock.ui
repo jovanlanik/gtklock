@@ -11,13 +11,13 @@
 			<object class="GtkLabel" id="clock-label">
 				<property name="name">clock-label</property>
 				<property name="halign">center</property>
-				<property name="margin-bottom">10</property>
+				<property name="margin-bottom">0</property>
 			</object>
 		</child>
 		<child>
 			<object class="GtkLabel" id="date-label">
 				<property name="name">date-label</property>
-				<property name="halign">start</property>
+				<property name="halign">center</property>
 				<property name="margin-bottom">10</property>
 			</object>
 		</child>
