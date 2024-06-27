@@ -5,7 +5,9 @@
 
 #include <signal.h>
 #include <sys/wait.h>
+#include <locale.h>
 #include <glib-unix.h>
+#include <glib/gi18n-lib.h>
 #include <gtk/gtk.h>
 
 #include "util.h"
@@ -270,6 +272,11 @@ static gboolean signal_handler(gpointer data) {
 }
 
 int main(int argc, char **argv) {
+	setlocale(LC_ALL, "");
+	bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
+	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
+	textdomain(GETTEXT_PACKAGE);
+
 	GOptionContext *option_context = g_option_context_new("- GTK-based lockscreen for sway");
 	g_option_context_add_main_entries(option_context, main_entries, NULL);
 	g_option_context_set_help_enabled(option_context, FALSE);

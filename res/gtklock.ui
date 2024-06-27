@@ -32,7 +32,7 @@
 						<child>
 							<object class="GtkLabel" id="input-label">
 								<property name="name">input-label</property>
-								<property name="label">Password:</property>
+								<property name="label" translatable="yes">Password:</property>
 							</object>
 							<packing>
 								<property name="left-attach">0</property>
@@ -83,7 +83,7 @@
 								<child>
 									<object class="GtkButton" id="unlock-button">
 										<property name="name">unlock-button</property>
-										<property name="label">Unlock</property>
+										<property name="label" translatable="yes">Unlock</property>
 										<style>
 											<class name="suggested-action"/>
 										</style>

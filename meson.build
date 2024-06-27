@@ -25,6 +25,7 @@ dependencies = [
   pam,
 ]
 
+subdir('po')
 subdir('man')
 subdir('res')
 subdir('src')

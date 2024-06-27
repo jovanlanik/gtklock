@@ -5,6 +5,7 @@
 
 #include <time.h>
 
+#include <glib/gi18n-lib.h>
 #include <gtk/gtk.h>
 #include <gtk-session-lock.h>
 
@@ -125,7 +126,7 @@ static gboolean window_pw_failure(gpointer data) {
 	window_set_busy(ctx, FALSE);
 	gtk_entry_set_text(GTK_ENTRY(ctx->input_field), "");
 	gtk_entry_grab_focus_without_selecting(GTK_ENTRY(ctx->input_field));
-	gtk_label_set_text(GTK_LABEL(ctx->error_label), "Login failed");
+	gtk_label_set_text(GTK_LABEL(ctx->error_label), _("Login failed"));
 	return G_SOURCE_REMOVE;
 }
 
@@ -260,7 +261,7 @@ static void window_caps_state_changed(GdkKeymap *self, gpointer user_data) {
 	struct Window *w = gtklock->focused_window;
 	if(!w || !w->warning_label) return;
 
-	if(gdk_keymap_get_caps_lock_state(self)) gtk_label_set_text(GTK_LABEL(w->warning_label), "Caps Lock is on");
+	if(gdk_keymap_get_caps_lock_state(self)) gtk_label_set_text(GTK_LABEL(w->warning_label), _("Caps Lock is on"));
 	else gtk_label_set_text(GTK_LABEL(w->warning_label), "");
 }
 
