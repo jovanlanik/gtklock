@@ -1,5 +1,5 @@
 # gtklock
-# Copyright (c) 2023 Jianhua Lu, Jovan Lanik
+# Copyright (c) 2023 Jianhua Lu, Jovan Lanik, Zephyr Lykos
 
 project(
   'gtklock', 'c',

@@ -1,5 +1,5 @@
 // gtklock
-// Copyright (c) 2022 Jovan Lanik
+// Copyright (c) 2022 Jovan Lanik, Zephyr Lykos
 
 // PAM Authentication
 

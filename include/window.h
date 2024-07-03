@@ -1,5 +1,5 @@
 // gtklock
-// Copyright (c) 2022 Kenny Levinsen, Jovan Lanik
+// Copyright (c) 2022 Kenny Levinsen, Jovan Lanik, Bhaskar Khoraja
 
 // Window functions
 
