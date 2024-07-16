@@ -57,8 +57,26 @@
 							</packing>
 						</child>
 						<child>
-							<object class="GtkBox" id="message-box">
+							<object class="GtkRevealer" id="message-revealer">
+								<property name="transition-type">none</property>
 								<property name="no-show-all">1</property>
+								<child>
+									<object class="GtkScrolledWindow" id="message-scrolled-window">
+										<property name="hscrollbar-policy">never</property>
+										<property name="max-content-height">256</property>
+										<property name="propagate-natural-height">1</property>
+										<child>
+											<object class="GtkViewport">
+												<child>
+													<object class="GtkBox" id="message-box">
+														<property name="orientation">vertical</property>
+														<property name="homogeneous">1</property>
+													</object>
+												</child>
+											</object>
+										</child>
+									</object>
+								</child>
 							</object>
 							<packing>
 								<property name="left-attach">1</property>
