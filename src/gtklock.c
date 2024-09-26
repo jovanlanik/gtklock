@@ -111,13 +111,26 @@ struct GtkLock* create_gtklock(void) {
 	return gtklock;
 }
 
-void gtklock_activate(struct GtkLock *gtklock) {
-	g_application_hold(G_APPLICATION(gtklock->app));
+static void locked(GtkSessionLockLock *lock, void *data) {
+	g_application_hold(G_APPLICATION(data));
+	return;
+}
 
+static void finished(GtkSessionLockLock *lock, void *data) {
+	gtk_session_lock_lock_destroy(lock);
+	report_error_and_exit("Failed to lock session");
+}
+
+void gtklock_activate(struct GtkLock *gtklock) {
 	if(!gtk_session_lock_is_supported())
 		report_error_and_exit("Your compositor doesn't support ext-session-lock");
 	gtklock->lock = gtk_session_lock_prepare_lock();
+
+	g_signal_connect(gtklock->lock, "locked", G_CALLBACK(locked), gtklock->app);
+	g_signal_connect(gtklock->lock, "finished", G_CALLBACK(finished), NULL);
+
 	gtk_session_lock_lock_lock(gtklock->lock);
+
 
 	gtklock->draw_time_source = g_timeout_add(1000, G_SOURCE_FUNC(gtklock_update_time_handler), gtklock);
 	gtklock_update_clocks(gtklock);
