@@ -109,15 +109,6 @@ static void monitors_removed(GdkDisplay *display, GdkMonitor *monitor, gpointer 
 	module_on_output_change(gtklock);
 }
 
-static void exec_command(const gchar *command) {
-	GError *err = NULL;
-	g_spawn_command_line_async(command, &err);
-	if(err != NULL) {
-		g_warning("Executing `%s` failed: %s", command, err->message);
-		g_error_free(err);
-	}
-}
-
 static gboolean find_priority_monitor(char *name) {
 	if(monitor_priority) {
 		for(guint i = 0; monitor_priority[i] != NULL; ++i)
@@ -189,9 +180,6 @@ static void activate(GtkApplication *app, gpointer user_data) {
 	g_array_unref(monitors);
 	g_array_unref(priority_monitors);
 	g_hash_table_unref(priority_monitor_names);
-
-	if(parent > 0) kill(parent, SIGUSR1);
-	if(lock_command) exec_command(lock_command);
 }
 
 static void shutdown(GtkApplication *app, gpointer user_data) {
@@ -200,7 +188,6 @@ static void shutdown(GtkApplication *app, gpointer user_data) {
 		g_module_close(module);
 	}
 	gtklock_shutdown(gtklock);
-	if(unlock_command) exec_command(unlock_command);
 }
 
 static void attach_style(const gchar *format, ...) G_GNUC_PRINTF(1, 2);
@@ -271,6 +258,12 @@ static gboolean signal_handler(gpointer data) {
 	return G_SOURCE_REMOVE;
 }
 
+#if GLIB_CHECK_VERSION(2, 74, 0)
+	#define GTKLOCK_FLAGS G_APPLICATION_DEFAULT_FLAGS
+#else
+	#define GTKLOCK_FLAGS G_APPLICATION_FLAGS_NONE
+#endif
+
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
 	bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
@@ -338,11 +331,30 @@ int main(int argc, char **argv) {
 		g_object_set(settings, "gtk-theme-name", gtk_theme, NULL);
 	}
 
-	gtklock = create_gtklock();
+	struct GtkLock g = {};
+	gtklock = &g;
+
+	gtklock->app = gtk_application_new(NULL, GTKLOCK_FLAGS);
+	gtklock->parent = parent;
+
+	gtklock->windows = g_array_new(FALSE, TRUE, sizeof(struct Window *));
+	gtklock->messages = g_array_new(FALSE, TRUE, sizeof(char *));
+	gtklock->errors = g_array_new(FALSE, TRUE, sizeof(char *));
+
+	gtklock->hidden = start_hidden;
+	gtklock->idle_timeout = (guint)idle_timeout;
+
 	gtklock->follow_focus = follow_focus;
 	gtklock->use_idle_hide = idle_hide;
-	gtklock->idle_timeout = (guint)idle_timeout;
-	gtklock->hidden = start_hidden;
+
+	gtklock->time_format = time_format;
+	gtklock->date_format = date_format;
+	gtklock->config_path = config_path;
+	gtklock->layout_path = layout_path;
+	gtklock->lock_command = lock_command;
+	gtklock->unlock_command = unlock_command;
+
+	gtklock->modules = modules;
 
 	if(background_path != NULL) {
 		GFile *file = g_file_new_for_path(background_path);
@@ -382,19 +394,14 @@ int main(int argc, char **argv) {
 		g_free(style_path);
 	}
 
-	gtklock->modules = modules;
-
-	gtklock->time_format = time_format;
-	gtklock->date_format = date_format;
-	gtklock->config_path = config_path;
-	gtklock->layout_path = layout_path;
-
 	g_signal_connect(gtklock->app, "activate", G_CALLBACK(activate), NULL);
 	g_signal_connect(gtklock->app, "shutdown", G_CALLBACK(shutdown), NULL);
 	g_unix_signal_add(SIGTERM, G_SOURCE_FUNC(signal_handler), NULL);
 	int status = g_application_run(G_APPLICATION(gtklock->app), argc, argv);
 
-	gtklock_destroy(gtklock);
+	g_object_unref(gtklock->app);
+	g_array_unref(gtklock->windows);
+
 	return status;
 }
 

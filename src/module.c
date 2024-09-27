@@ -87,6 +87,14 @@ void module_on_activation(struct GtkLock *gtklock) {
 	}
 }
 
+void module_on_locked(struct GtkLock *gtklock) {
+	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
+		void (*fn)(struct GtkLock *) = NULL;
+		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
+		if(g_module_symbol(module, "on_locked", (gpointer *)&fn)) fn(gtklock);
+	}
+}
+
 void module_on_output_change(struct GtkLock *gtklock) {
 	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
 		void (*fn)(struct GtkLock *) = NULL;
