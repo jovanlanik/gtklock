@@ -6,19 +6,32 @@
 		<property name="halign">center</property>
 		<property name="valign">center</property>
 		<property name="orientation">vertical</property>
-		<property name="spacing">5</property>
+		<property name="spacing">10</property>
 		<child>
-			<object class="GtkLabel" id="clock-label">
-				<property name="name">clock-label</property>
+			<object class="GtkBox" id="info-box">
+				<property name="name">info-box</property>
 				<property name="halign">center</property>
-				<property name="margin-bottom">0</property>
-			</object>
-		</child>
-		<child>
-			<object class="GtkLabel" id="date-label">
-				<property name="name">date-label</property>
-				<property name="halign">center</property>
-				<property name="margin-bottom">10</property>
+				<property name="orientation">vertical</property>
+				<property name="spacing">5</property>
+				<child>
+					<object class="GtkBox" id="time-box">
+						<property name="name">time-box</property>
+						<property name="halign">center</property>
+						<property name="orientation">vertical</property>
+						<child>
+							<object class="GtkLabel" id="clock-label">
+								<property name="name">clock-label</property>
+								<property name="halign">center</property>
+							</object>
+						</child>
+						<child>
+							<object class="GtkLabel" id="date-label">
+								<property name="name">date-label</property>
+								<property name="halign">center</property>
+							</object>
+						</child>
+					</object>
+				</child>
 			</object>
 		</child>
 		<child>

@@ -23,6 +23,8 @@ struct Window {
 	GtkWidget *unlock_button;
 	GtkWidget *error_label;
 	GtkWidget *warning_label;
+	GtkWidget *info_box;
+	GtkWidget *time_box;
 	GtkWidget *clock_label;
 	GtkWidget *date_label;
 

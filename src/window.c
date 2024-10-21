@@ -355,6 +355,9 @@ struct Window *create_window(GdkMonitor *monitor) {
 	w->unlock_button = GTK_WIDGET(gtk_builder_get_object(builder, "unlock-button"));
 	w->error_label = GTK_WIDGET(gtk_builder_get_object(builder, "error-label"));
 	w->warning_label = GTK_WIDGET(gtk_builder_get_object(builder, "warning-label"));
+	
+	w->info_box = GTK_WIDGET(gtk_builder_get_object(builder, "info-box"));
+	w->time_box = GTK_WIDGET(gtk_builder_get_object(builder, "time-box"));
 
 	w->clock_label = GTK_WIDGET(gtk_builder_get_object(builder, "clock-label"));
 	window_update_clock(w);
