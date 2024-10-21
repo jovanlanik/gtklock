@@ -175,7 +175,7 @@ static void activate(GtkApplication *app, gpointer user_data) {
 	g_array_prepend_vals(monitors, data, len);
 
 	for(guint idx = 0; idx < monitors->len; idx++) create_window(g_array_index(monitors, GdkMonitor *, idx));
-	gtklock_focus_window(gtklock, g_array_index(gtklock->windows, struct Window *, 0));
+	if(gtklock->windows->len) gtklock_focus_window(gtklock, g_array_index(gtklock->windows, struct Window *, 0));
 
 	g_array_unref(monitors);
 	g_array_unref(priority_monitors);
