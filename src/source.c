@@ -183,11 +183,11 @@ static void activate(GtkApplication *app, gpointer user_data) {
 }
 
 static void shutdown(GtkApplication *app, gpointer user_data) {
+	gtklock_shutdown(gtklock);
 	for(guint idx = 0; idx < gtklock->modules->len; idx++) {
 		GModule *module = g_array_index(gtklock->modules, GModule *, idx);
 		g_module_close(module);
 	}
-	gtklock_shutdown(gtklock);
 }
 
 static void attach_style(const gchar *format, ...) G_GNUC_PRINTF(1, 2);
