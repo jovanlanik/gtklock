@@ -151,6 +151,11 @@ void gtklock_shutdown(struct GtkLock *gtklock) {
 	gtk_session_lock_lock_unlock_and_destroy(gtklock->lock);
 	gdk_display_sync(gdk_display_get_default());
 
+	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
+		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
+		gtk_widget_destroy(ctx->window);
+	}
+
 	if(gtklock->unlock_command) exec_command(gtklock->unlock_command);
 }
 
