@@ -19,7 +19,7 @@ msgstr ""
 
 #: src/window.c:129
 msgid "Login failed"
-msgstr "登陆失败"
+msgstr "登录失败"
 
 #: src/window.c:264
 msgid "Caps Lock is on"
