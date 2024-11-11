@@ -16,7 +16,7 @@ micro_version = version[2]
 gtk = dependency('gtk+-3.0')
 gtk_session_lock = dependency('gtk-session-lock-0')
 gmodule_export = dependency('gmodule-export-2.0')
-pam = dependency('pam')
+pam = meson.get_compiler('c').find_library('pam')
 
 dependencies = [
   gtk,
