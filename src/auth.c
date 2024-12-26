@@ -15,6 +15,7 @@
 #include "auth.h"
 
 struct conv_data {
+  char authentication_err;
 	const char *pw;
 	int *err;
 	int *out;
@@ -58,6 +59,12 @@ static int conversation(
 		switch(msg[i]->msg_style) {
 			case PAM_PROMPT_ECHO_OFF:
 			case PAM_PROMPT_ECHO_ON:
+        if (data->authentication_err == 1) {
+          free(*resp);
+          *resp = NULL;
+          return PAM_ABORT;
+        }
+
 				resp[i]->resp = strdup(data->pw);
 				if(resp[i]->resp == NULL) {
 					g_warning("Failed allocation");
@@ -65,8 +72,10 @@ static int conversation(
 				}
 				break;
 			case PAM_ERROR_MSG:
-				send_msg(msg[i]->msg, data->err[1]);
-				break;
+        //send_msg(msg[i]->msg, data->err[1]);
+        g_warning("gtklock: Wrong password!");
+        data->authentication_err = 1;
+        break;
 			case PAM_TEXT_INFO:
 				send_msg(msg[i]->msg, data->out[1]);
 				break;
@@ -88,7 +97,7 @@ static void auth_child(const char *s, int *err, int *out) {
 	char *username = pwd->pw_name;
 	int pam_status;
 	struct pam_handle *handle;
-	struct conv_data data = { .pw = s, .err = err, .out = out };
+	struct conv_data data = { .authentication_err = 0, .pw = s, .err = err, .out = out };
 	struct pam_conv conv = { conversation, (void *)&data };
 	pam_status = pam_start("gtklock", username, &conv, &handle);
 	if(pam_status != PAM_SUCCESS) {
