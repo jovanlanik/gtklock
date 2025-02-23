@@ -6,6 +6,7 @@
 #pragma once
 
 #include <glib.h>
+#include <security/pam_appl.h>
 
 enum pwcheck {
 	PW_WAIT,
@@ -15,15 +16,13 @@ enum pwcheck {
 	PW_MESSAGE,
 };
 
-enum pipedir {
-	PIPE_PARENT,
-	PIPE_CHILD,
-	PIPE_LAST,
+struct conv_data {
+	gboolean error;
+	const char *pw;
+	gpointer ctx;
 };
 
-typedef int pipe_t[PIPE_LAST];
-
-char *auth_get_error(void);
-char *auth_get_message(void);
-enum pwcheck auth_pw_check(const char *s);
-
+int start_authentication(
+	int (*convers)(int, const struct pam_message **, struct pam_response **, void *),
+	struct conv_data data
+);
