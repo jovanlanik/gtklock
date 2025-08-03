@@ -1,0 +1,36 @@
+# Romanian translations for gtklock package.
+# Copyright (C) 2025 THE gtklock'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gtklock package.
+# Vlad <vlad@roundabout-host.com>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gtklock\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-07-07 13:48+0200\n"
+"PO-Revision-Date: 2025-08-03 21:05+0300\n"
+"Last-Translator: Vlad <vlad@roundabout-host.com>\n"
+"Language-Team: Romanian <translation-team-ro@lists.sourceforge.net>\n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
+"20)) ? 1 : 2;\n"
+"X-Generator: Poedit 3.6\n"
+
+#: src/window.c:129
+msgid "Login failed"
+msgstr "Autentificare eșuată"
+
+#: src/window.c:264
+msgid "Caps Lock is on"
+msgstr "Majusculele sunt blocate"
+
+#: res/gtklock.ui:35
+msgid "Password:"
+msgstr "Parola:"
+
+#: res/gtklock.ui:86
+msgid "Unlock"
+msgstr "Deblochează"
