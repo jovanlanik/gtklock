@@ -100,6 +100,11 @@ window {
 }
 ```
 
+# SIGNALS
+
+*SIGUSR1*
+	Unlock the screen and exit.
+
 # AUTHORS
 
 Maintained by Jovan Lanik <jox969@gmail.com>, who is assisted by other
