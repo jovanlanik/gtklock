@@ -237,10 +237,10 @@ static void daemonize(void) {
 		if(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS) {
 			sigset_t set;
 			sigemptyset(&set);
-			sigaddset(&set, SIGUSR1);
+			sigaddset(&set, SIGUSR2);
 			sigprocmask(SIG_BLOCK, &set, NULL);
 			int ret = sigtimedwait(&set, NULL, &(struct timespec){ 1, 0 });
-			if(ret == SIGUSR1)
+			if(ret == SIGUSR2)
 				exit(EXIT_SUCCESS);
 			exit(EXIT_FAILURE);
 		}
