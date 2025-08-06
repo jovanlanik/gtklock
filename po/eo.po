@@ -1,0 +1,35 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gtklock package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: gtklock\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-07-07 13:48+0200\n"
+"PO-Revision-Date: 2025-08-06 21:56+0200\n"
+"Last-Translator: Szafranek 13 <jakubfabijan@tuta.io>\n"
+"Language-Team: Luduko <discord.gg/aArnDCUGbu>\n"
+"Language: eo\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.6\n"
+
+#: src/window.c:129
+msgid "Login failed"
+msgstr "Ensaluto malsukcesis"
+
+#: src/window.c:264
+msgid "Caps Lock is on"
+msgstr "Caps Lock ŝaltita"
+
+#: res/gtklock.ui:35
+msgid "Password:"
+msgstr "Pasvorto:"
+
+#: res/gtklock.ui:86
+msgid "Unlock"
+msgstr "Malŝlosi"
