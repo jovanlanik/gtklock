@@ -4,6 +4,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/wait.h>
 #include <locale.h>
 #include <glib-unix.h>
@@ -85,6 +86,8 @@ static GOptionEntry debug_entries[] = {
 };
 
 static pid_t parent = -2;
+
+static char *lock_file = "/tmp/gtklock.lock";
 
 static void monitors_added(GdkDisplay *display, GdkMonitor *monitor, gpointer user_data) {
 	struct Window *w = NULL;
@@ -253,6 +256,24 @@ static void daemonize(void) {
 	else if(pid != 0) exit(EXIT_SUCCESS);
 }
 
+static void ensure_single_instance(void) {
+  int fd = open(lock_file, O_RDWR | O_CREAT, 0666);
+	if (fd < 0) {
+			report_error_and_exit("Failed to open lock file!\n");
+			exit(EXIT_FAILURE);
+	}
+
+	if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
+		if(errno == EWOULDBLOCK) {
+			g_print("gtklock is already running.\n");
+			exit(EXIT_SUCCESS);
+		} else {
+			report_error_and_exit("Failed to lock file!\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
 static gboolean signal_handler(gpointer data) {
 	g_application_quit(G_APPLICATION(gtklock->app));
 	return G_SOURCE_REMOVE;
@@ -280,6 +301,8 @@ int main(int argc, char **argv) {
 		g_print("gtklock %s\n", "v" STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MICRO_VERSION));
 		exit(EXIT_SUCCESS);
 	}
+
+	ensure_single_instance();
 
 	if(should_daemonize) daemonize();
 
