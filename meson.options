@@ -1,0 +1,1 @@
+option('man-pages', type : 'boolean', value : true)

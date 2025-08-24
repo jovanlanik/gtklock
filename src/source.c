@@ -103,8 +103,9 @@ static void monitors_removed(GdkDisplay *display, GdkMonitor *monitor, gpointer 
 			gtklock->focused_window = NULL;
 			if(any_window) window_swap_focus(any_window, w);
 		}
-		gtk_session_lock_unmap_lock_window(GTK_WINDOW(w->window));
-		gtk_widget_destroy(w->window);
+
+		// gtk_session_lock_unmap_lock_window(GTK_WINDOW(w->window));
+		gtk_window_destroy(GTK_WINDOW(w->window));
 	}
 	module_on_output_change(gtklock);
 }
@@ -156,9 +157,10 @@ static void activate(GtkApplication *app, gpointer user_data) {
 	GArray *priority_monitors = g_array_new(FALSE, TRUE, sizeof(GdkMonitor *));
 	GHashTable *priority_monitor_names = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_free);
 
-	for(int i = 0; i < gdk_display_get_n_monitors(display); ++i) {
-		char *name = gdk_screen_get_monitor_plug_name(gdk_screen_get_default(), i);
-		GdkMonitor *monitor = gdk_display_get_monitor(display, i);
+	GListModel* monitors2 = gdk_display_get_monitors(display);
+	for(int i = 0; i < g_list_model_get_n_items(monitors2); ++i) {
+		GdkMonitor *monitor = g_list_model_get_item (monitors2, i);
+		char *name = gdk_monitor_get_model(monitor);
 
 		if(find_priority_monitor(name)) {
 			g_hash_table_insert(priority_monitor_names, monitor, name);
@@ -174,12 +176,16 @@ static void activate(GtkApplication *app, gpointer user_data) {
 	gpointer data = g_array_steal(priority_monitors, &len);
 	g_array_prepend_vals(monitors, data, len);
 
+	gtk_session_lock_instance_lock(gtklock->lock);
+
 	for(guint idx = 0; idx < monitors->len; idx++) create_window(g_array_index(monitors, GdkMonitor *, idx));
 	if(gtklock->windows->len) gtklock_focus_window(gtklock, g_array_index(gtklock->windows, struct Window *, 0));
 
 	g_array_unref(monitors);
 	g_array_unref(priority_monitors);
 	g_hash_table_unref(priority_monitor_names);
+
+
 }
 
 static void shutdown(GtkApplication *app, gpointer user_data) {
@@ -198,15 +204,24 @@ static void attach_style(const gchar *format, ...) {
 	va_start(args, format);
 	char *buff = g_strdup_vprintf(format, args);
 	va_end(args);
-
-	gtk_css_provider_load_from_data(provider, buff, -1, &err);
+	gtk_css_provider_load_from_string(provider, buff);
+	// Now we need to connect to the CssProvider::parsing-error signal to check error!
+    /*
 	if(err != NULL) {
 		g_warning("Style loading failed: %s", err->message);
 		g_error_free(err);
-	} else {
-		gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
-			GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 	}
+	*/
+	GdkDisplay *display = gdk_display_get_default();
+	if(display == NULL){
+		display = gdk_display_open(NULL); // NULL uses the default display name
+	}
+	if(display == NULL){
+		g_warning("Failed to open display");
+		return;
+	}
+	gtk_style_context_add_provider_for_display(gdk_display_get_default(),
+		GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
 	g_object_unref(provider);
 	g_free(buff);
@@ -216,14 +231,16 @@ static void attach_custom_style(const gchar *path) {
 	GtkCssProvider *provider = gtk_css_provider_new();
 	GError *err = NULL;
 
-	gtk_css_provider_load_from_path(provider, path, &err);
+	gtk_css_provider_load_from_path(provider, path);
+	/*
+	// Again we need to actually connect to a signal now!
 	if(err != NULL) {
 		g_warning("Custom style loading failed: %s", err->message);
 		g_error_free(err);
-	} else {
-		gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
-			GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION+1);
 	}
+	*/
+	gtk_style_context_add_provider_for_display(gdk_display_get_default(),
+			GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION+1);
 	g_object_unref(provider);
 }
 
@@ -265,6 +282,7 @@ static gboolean signal_handler(gpointer data) {
 #endif
 
 int main(int argc, char **argv) {
+	gtk_init();
 	setlocale(LC_ALL, "");
 	bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
 	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
@@ -295,7 +313,7 @@ int main(int argc, char **argv) {
 	g_option_group_add_entries(debug_group, debug_entries);
 	g_option_context_add_group(option_context, config_group);
 	g_option_context_add_group(option_context, debug_group);
-	g_option_context_add_group(option_context, gtk_get_option_group(TRUE));
+	//g_option_context_add_group(option_context, gtk_get_option_group(TRUE));
 	g_option_context_parse(option_context, &argc, &argv, NULL);
 
 	GArray *modules = g_array_new(FALSE, TRUE, sizeof(GModule *));
