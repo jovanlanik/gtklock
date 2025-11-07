@@ -40,6 +40,7 @@ static gboolean should_daemonize = FALSE;
 static gboolean follow_focus = FALSE;
 static gboolean idle_hide = FALSE;
 static gboolean start_hidden = FALSE;
+static gboolean test_mode = FALSE;
 
 static gint idle_timeout = 15;
 
@@ -59,6 +60,7 @@ static GOptionEntry main_entries[] = {
 	{ "version", 'v', 0, G_OPTION_ARG_NONE, &show_version, "Show version", NULL },
 	{ "config", 'c', 0, G_OPTION_ARG_FILENAME, &config_path, "Load config file", NULL },
 	{ "daemonize", 'd', 0, G_OPTION_ARG_NONE, &should_daemonize, "Detach from controlling terminal", NULL },
+	{ "preview", 'p', 0, G_OPTION_ARG_NONE, &test_mode, "Enable preview mode where any password can unlock", NULL },
 	{ NULL },
 };
 
@@ -343,6 +345,7 @@ int main(int argc, char **argv) {
 
 	gtklock->hidden = start_hidden;
 	gtklock->idle_timeout = (guint)idle_timeout;
+	gtklock->test_mode = test_mode;
 
 	gtklock->follow_focus = follow_focus;
 	gtklock->use_idle_hide = idle_hide;
