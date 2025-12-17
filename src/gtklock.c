@@ -34,7 +34,24 @@ void gtklock_update_clocks(struct GtkLock *gtklock) {
 	GDateTime *time = g_date_time_new_now_local();
 	if(time == NULL) return;
 	if(gtklock->time) g_free(gtklock->time);
-	gtklock->time = g_date_time_format(time, gtklock->time_format ? gtklock->time_format : "%R");
+
+	char *base = g_date_time_format(time, gtklock->time_format ? gtklock->time_format : "%R");
+	if(gtklock->clock_update_interval < 1000) {
+		gint microseconds = g_date_time_get_microsecond(time);
+		if(gtklock->clock_update_interval < 10) {
+			// milliseconds (3 digits)
+			gtklock->time = g_strdup_printf("%s:%03d", base, microseconds / 1000);
+		} else if(gtklock->clock_update_interval < 100) {
+			// centiseconds (2 digits)
+			gtklock->time = g_strdup_printf("%s:%02d", base, microseconds / 10000);
+		} else {
+			// deciseconds (1 digit)
+			gtklock->time = g_strdup_printf("%s:%d", base, microseconds / 100000);
+		}
+		g_free(base);
+	} else {
+		gtklock->time = base;
+	}
 	g_date_time_unref(time);
 
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
@@ -141,7 +158,7 @@ void gtklock_activate(struct GtkLock *gtklock) {
 	gtk_session_lock_lock_lock(gtklock->lock);
 
 
-	gtklock->draw_time_source = g_timeout_add(1000, G_SOURCE_FUNC(update_time_handler), gtklock);
+	gtklock->draw_time_source = g_timeout_add(gtklock->clock_update_interval, G_SOURCE_FUNC(update_time_handler), gtklock);
 	gtklock_update_clocks(gtklock);
 	gtklock_update_dates(gtklock);
 	if(gtklock->use_idle_hide) gtklock->idle_hide_source =

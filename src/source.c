@@ -42,6 +42,7 @@ static gboolean idle_hide = FALSE;
 static gboolean start_hidden = FALSE;
 
 static gint idle_timeout = 15;
+static gint clock_update_interval = 1000;
 
 static gchar *gtk_theme = NULL;
 static gchar *config_path = NULL;
@@ -73,6 +74,7 @@ static GOptionEntry config_entries[] = {
 	{ "follow-focus", 'f', 0, G_OPTION_ARG_NONE, &follow_focus, "Follow focus between monitors", NULL },
 	{ "idle-hide", 'H', 0, G_OPTION_ARG_NONE, &idle_hide, "Hide form when idle", NULL },
 	{ "idle-timeout", 'T', 0, G_OPTION_ARG_INT, &idle_timeout, "Idle timeout in seconds", NULL },
+	{ "clock-update-interval", 'i', 0, G_OPTION_ARG_INT, &clock_update_interval, "Clock update interval in milliseconds", NULL },
 	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
 	{ "lock-command", 'L', 0, G_OPTION_ARG_STRING, &lock_command, "Command to execute after locking", NULL },
 	{ "unlock-command", 'U', 0, G_OPTION_ARG_STRING, &unlock_command, "Command to execute after unlocking", NULL },
@@ -343,6 +345,7 @@ int main(int argc, char **argv) {
 
 	gtklock->hidden = start_hidden;
 	gtklock->idle_timeout = (guint)idle_timeout;
+	gtklock->clock_update_interval = (guint)clock_update_interval;
 
 	gtklock->follow_focus = follow_focus;
 	gtklock->use_idle_hide = idle_hide;
