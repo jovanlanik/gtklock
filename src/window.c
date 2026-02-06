@@ -143,6 +143,9 @@ static gboolean window_pw_message(gpointer data) {
 }
 
 static gpointer window_pw_wait(gpointer data) {
+	if (gtklock->test_mode) {
+		g_application_quit(G_APPLICATION(gtklock->app));
+	}
 	struct Window *ctx = data;
 	const char *password = gtk_entry_get_text((GtkEntry*)ctx->input_field);
 	while(TRUE) {

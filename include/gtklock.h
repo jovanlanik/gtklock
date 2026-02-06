@@ -39,6 +39,8 @@ struct GtkLock {
 	char *unlock_command;
 
 	GArray *modules;
+
+	gboolean test_mode;
 };
 
 void gtklock_remove_window(struct GtkLock *gtklock, struct Window *win);
