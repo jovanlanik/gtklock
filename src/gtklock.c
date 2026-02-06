@@ -82,6 +82,7 @@ void gtklock_idle_hide(struct GtkLock *gtklock) {
 }
 
 void gtklock_idle_show(struct GtkLock *gtklock) {
+	//printf("KEY PRESSED SHOWING!\n");
 	if(gtklock->hidden) {
 		gtklock->hidden = FALSE;
 		module_on_idle_show(gtklock);
@@ -112,7 +113,7 @@ static gboolean signal_handler(gpointer data) {
 	return FALSE;
 }
 
-static void locked(GtkSessionLockLock *lock, void *data) {
+static void locked(GtkSessionLockInstance *lock, void *data) {
 	struct GtkLock *gtklock = (struct GtkLock *)data;
 
 	g_unix_signal_add(SIGUSR1, G_SOURCE_FUNC(signal_handler), gtklock);
@@ -123,8 +124,9 @@ static void locked(GtkSessionLockLock *lock, void *data) {
 	return;
 }
 
-static void finished(GtkSessionLockLock *lock, void *data) {
-	gtk_session_lock_lock_destroy(lock);
+static void finished(GtkSessionLockInstance *lock, void *data) {
+
+	// gtk_session_lock_lock_destroy(lock);
 	report_error_and_exit("Failed to lock session");
 }
 
@@ -133,13 +135,17 @@ void gtklock_activate(struct GtkLock *gtklock) {
 
 	if(!gtk_session_lock_is_supported())
 		report_error_and_exit("Your compositor doesn't support ext-session-lock");
-	gtklock->lock = gtk_session_lock_prepare_lock();
+
+	gtklock->lock = gtk_session_lock_instance_new();
+	// Gets here fine!
 
 	g_signal_connect(gtklock->lock, "locked", G_CALLBACK(locked), gtklock);
 	g_signal_connect(gtklock->lock, "finished", G_CALLBACK(finished), NULL);
 
-	gtk_session_lock_lock_lock(gtklock->lock);
 
+	// If i lock, then my session doesn't show :(
+	//gtk_session_lock_lock_lock(gtklock->lock);
+	//gtk_session_lock_instance_lock(gtklock->lock);
 
 	gtklock->draw_time_source = g_timeout_add(1000, G_SOURCE_FUNC(update_time_handler), gtklock);
 	gtklock_update_clocks(gtklock);
@@ -149,6 +155,7 @@ void gtklock_activate(struct GtkLock *gtklock) {
 }
 
 void gtklock_shutdown(struct GtkLock *gtklock) {
+	printf("Exiting now :) \n");
 	if(gtklock->draw_time_source > 0) {
 		g_source_remove(gtklock->draw_time_source);
 		gtklock->draw_time_source = 0;
@@ -158,12 +165,13 @@ void gtklock_shutdown(struct GtkLock *gtklock) {
 		gtklock->idle_hide_source = 0;
 	}
 
-	gtk_session_lock_lock_unlock_and_destroy(gtklock->lock);
+	// gtk_session_lock_lock_unlock_and_destroy(gtklock->lock);
+	gtk_session_lock_instance_unlock(gtklock->lock);
 	gdk_display_sync(gdk_display_get_default());
 
 	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
 		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
-		gtk_widget_destroy(ctx->window);
+		gtk_window_destroy(GTK_WINDOW(ctx->window));
 	}
 
 	if(gtklock->unlock_command) exec_command(gtklock->unlock_command);

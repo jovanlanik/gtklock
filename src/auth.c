@@ -82,7 +82,7 @@ static void auth_child(const char *s, int *err, int *out) {
 	pwd = getpwuid(getuid());
 	if(pwd == NULL) {
 		perror("getpwnam");
-		exit(EXIT_FAILURE);
+		_Exit(EXIT_FAILURE);
 	}
 
 	char *username = pwd->pw_name;
@@ -93,16 +93,20 @@ static void auth_child(const char *s, int *err, int *out) {
 	pam_status = pam_start("gtklock", username, &conv, &handle);
 	if(pam_status != PAM_SUCCESS) {
 		fprintf(stderr, "pam_start() failed");
-		exit(EXIT_FAILURE);
+		_Exit(EXIT_FAILURE);
 	}
 
 	int ret = pam_authenticate((pam_handle_t *)handle, 0);
 	pam_status = ret;
+	if (pam_status != PAM_SUCCESS){
+		fprintf(stderr, "Wrong password\n");
+		_Exit(EXIT_FAILURE);
+	}
 	pam_status = pam_setcred((pam_handle_t *)handle, PAM_REFRESH_CRED);
 	if(pam_end(handle, pam_status) != PAM_SUCCESS)
 		fprintf(stderr, "pam_end() failed");
-	if(ret == PAM_SUCCESS) exit(EXIT_SUCCESS);
-	exit(EXIT_FAILURE);
+	if(ret == PAM_SUCCESS) _Exit(EXIT_SUCCESS);
+	_Exit(EXIT_FAILURE);
 }
 
 enum pwcheck auth_pw_check(const char *s) {
@@ -162,10 +166,12 @@ enum pwcheck auth_pw_check(const char *s) {
 		return PW_MESSAGE;
 	}
 
-	int status;
-	if(waitpid(pid, &status, WNOHANG) != 0 && WIFEXITED(status)) {
+	siginfo_t info;
+	if(waitid(P_PID, pid, &info, WEXITED)==0){
 		pid = -2;
-		if(WEXITSTATUS(status) == EXIT_SUCCESS) return PW_SUCCESS;
+		if(WIFEXITED(info.si_status) && WEXITSTATUS(info.si_status) == EXIT_SUCCESS){
+			return PW_SUCCESS;
+		}
 		else return PW_FAILURE;
 	}
 	return PW_WAIT;

@@ -1,0 +1,7 @@
+[wrap-git]
+directory = gtk4-layer-shell
+url = git@github.com:wmww/gtk4-layer-shell.git
+revision = 948622589fbfc8cb6bf1f436ba06592d5802e255
+
+[provide]
+dependency_names = gtk4-layer-shell

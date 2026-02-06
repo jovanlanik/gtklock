@@ -6,13 +6,13 @@
 #pragma once
 
 #include <gtk/gtk.h>
-#include <gtk-session-lock.h>
+#include <gtk4-session-lock.h>
 
 struct Window;
 
 struct GtkLock {
 	GtkApplication *app;
-	GtkSessionLockLock *lock;
+	GtkSessionLockInstance *lock;
 	pid_t parent;
 
 	GArray *windows;
