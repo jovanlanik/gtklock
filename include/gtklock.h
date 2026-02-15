@@ -25,6 +25,7 @@ struct GtkLock {
 
 	guint draw_time_source;
 	guint idle_hide_source;
+	guint clock_update_interval;
 
 	gboolean follow_focus;
 	gboolean use_idle_hide;
