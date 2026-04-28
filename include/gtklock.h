@@ -37,6 +37,7 @@ struct GtkLock {
 	char *layout_path;
 	char *lock_command;
 	char *unlock_command;
+	char *idle_command;
 
 	GArray *modules;
 };

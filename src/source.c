@@ -53,6 +53,7 @@ static gchar *time_format = NULL;
 static gchar *date_format = NULL;
 static gchar *lock_command = NULL;
 static gchar *unlock_command = NULL;
+static gchar *idle_command = NULL;
 static gchar **monitor_priority = NULL;
 
 static GOptionEntry main_entries[] = {
@@ -76,6 +77,7 @@ static GOptionEntry config_entries[] = {
 	{ "start-hidden", 'S', 0, G_OPTION_ARG_NONE, &start_hidden, "Start with hidden form", NULL },
 	{ "lock-command", 'L', 0, G_OPTION_ARG_STRING, &lock_command, "Command to execute after locking", NULL },
 	{ "unlock-command", 'U', 0, G_OPTION_ARG_STRING, &unlock_command, "Command to execute after unlocking", NULL },
+	{ "idle-command", 'I', 0, G_OPTION_ARG_STRING, &idle_command, "Command to execute after idle timeout", NULL },
 	{ "monitor-priority", 'M', 0, G_OPTION_ARG_STRING_ARRAY, &monitor_priority, "Set monitor focus priority", NULL },
 	{ NULL },
 };
@@ -270,7 +272,7 @@ int main(int argc, char **argv) {
 	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
 	textdomain(GETTEXT_PACKAGE);
 
-	GOptionContext *option_context = g_option_context_new("- GTK-based lockscreen for sway");
+	GOptionContext *option_context = g_option_context_new("- GTK-based lockscreen for Wayland");
 	g_option_context_add_main_entries(option_context, main_entries, NULL);
 	g_option_context_set_help_enabled(option_context, FALSE);
 	g_option_context_set_ignore_unknown_options(option_context, TRUE);
@@ -353,6 +355,7 @@ int main(int argc, char **argv) {
 	gtklock->layout_path = layout_path;
 	gtklock->lock_command = lock_command;
 	gtklock->unlock_command = unlock_command;
+	gtklock->idle_command = idle_command;
 
 	gtklock->modules = modules;
 

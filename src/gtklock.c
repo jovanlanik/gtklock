@@ -63,14 +63,24 @@ static gboolean update_time_handler(gpointer data) {
 	return G_SOURCE_CONTINUE;
 }
 
+static void exec_command(const gchar *command) {
+	GError *err = NULL;
+	g_spawn_command_line_async(command, &err);
+	if(err != NULL) {
+		g_warning("Executing `%s` failed: %s", command, err->message);
+		g_error_free(err);
+	}
+}
+
 static gboolean idle_handler(gpointer data) {
 	struct GtkLock *gtklock = (struct GtkLock *)data;
-	gtklock_idle_hide(gtklock);
+	if(gtklock->use_idle_hide) gtklock_idle_hide(gtklock);
+	if(gtklock->idle_command) exec_command(gtklock->idle_command);
 	return G_SOURCE_CONTINUE;
 }
 
 void gtklock_idle_hide(struct GtkLock *gtklock) {
-	if(!gtklock->use_idle_hide || gtklock->hidden || g_application_get_is_busy(G_APPLICATION(gtklock->app)))
+	if(gtklock->hidden || g_application_get_is_busy(G_APPLICATION(gtklock->app)))
 		return;
 	gtklock->hidden = TRUE;
 	module_on_idle_hide(gtklock);
@@ -85,24 +95,16 @@ void gtklock_idle_show(struct GtkLock *gtklock) {
 	if(gtklock->hidden) {
 		gtklock->hidden = FALSE;
 		module_on_idle_show(gtklock);
+
+		for(guint idx = 0; idx < gtklock->windows->len; idx++) {
+			struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
+			window_idle_show(ctx);
+		}
 	}
 
-	for(guint idx = 0; idx < gtklock->windows->len; idx++) {
-		struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
-		window_idle_show(ctx);
-	}
-
-	if(!gtklock->use_idle_hide) return;
-	if(gtklock->idle_hide_source > 0) g_source_remove(gtklock->idle_hide_source);
-	gtklock->idle_hide_source = g_timeout_add_seconds(gtklock->idle_timeout, G_SOURCE_FUNC(idle_handler), gtklock);
-}
-
-static void exec_command(const gchar *command) {
-	GError *err = NULL;
-	g_spawn_command_line_async(command, &err);
-	if(err != NULL) {
-		g_warning("Executing `%s` failed: %s", command, err->message);
-		g_error_free(err);
+	if(gtklock->use_idle_hide || gtklock->idle_command) {
+		if(gtklock->idle_hide_source > 0) g_source_remove(gtklock->idle_hide_source);
+		gtklock->idle_hide_source = g_timeout_add_seconds(gtklock->idle_timeout, G_SOURCE_FUNC(idle_handler), gtklock);
 	}
 }
 
@@ -144,7 +146,7 @@ void gtklock_activate(struct GtkLock *gtklock) {
 	gtklock->draw_time_source = g_timeout_add(1000, G_SOURCE_FUNC(update_time_handler), gtklock);
 	gtklock_update_clocks(gtklock);
 	gtklock_update_dates(gtklock);
-	if(gtklock->use_idle_hide) gtklock->idle_hide_source =
+	if(gtklock->use_idle_hide || gtklock->idle_command) gtklock->idle_hide_source =
 		g_timeout_add_seconds(gtklock->idle_timeout, G_SOURCE_FUNC(idle_handler), gtklock);
 }
 
