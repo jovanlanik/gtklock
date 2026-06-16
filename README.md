@@ -35,6 +35,7 @@ $ ninja -C builddir
 - [gtk-session-lock](https://github.com/Cu3PO42/gtk-session-lock)
 ### Installing build dependencies
 - Arch: `# pacman -S gcc meson pkgconf scdoc pam wayland gtk3 gtk-session-lock`
+- Debian / Ubuntu: `# apt-get install gcc libaudit-dev meson scdoc libpam0g-dev libwayland-dev libgtk-4-dev lib-gtk-session-lock-dev`
 - Fedora: `# dnf install gcc meson pkgconf scdoc pam-devel wayland-devel gtk3-devel`, install gtk-session-lock manually
 - Void: `# xbps-install gcc meson pkgconf scdoc pam-devel wayland-devel gtk+3-devel gtk-session-lock-devel`
 
