@@ -1,0 +1,35 @@
+# Spanish translations for gtklock package
+# Traducciones al español para el paquete gtklock.
+# Copyright (C) 2026 THE gtklock'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gtklock package.
+# Joel Rico Martínez <joel@debian>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gtklock\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-07-07 13:48+0200\n"
+"PO-Revision-Date: 2026-07-18 13:07+0200\n"
+"Last-Translator: Joel Rico Martínez <joel@debian>\n"
+"Language-Team: Spanish <es@tp.org.es>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/window.c:129
+msgid "Login failed"
+msgstr "Autenticación fallida"
+
+#: src/window.c:264
+msgid "Caps Lock is on"
+msgstr "Bloq Mayús está activado"
+
+#: res/gtklock.ui:35
+msgid "Password:"
+msgstr "Contraseña:"
+
+#: res/gtklock.ui:86
+msgid "Unlock"
+msgstr "Desbloquear"
