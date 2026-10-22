@@ -97,11 +97,17 @@ static void monitors_removed(GdkDisplay *display, GdkMonitor *monitor, gpointer 
 	struct Window *w = window_by_monitor(monitor);
 	if(w != NULL) {
 		if(gtklock->focused_window == w) {
-			struct Window *any_window = g_array_index(gtklock->windows, struct Window*, 0);
-			if(any_window == w) any_window = g_array_index(gtklock->windows, struct Window*, 1);
+			struct Window *any_window = NULL;
+			for(guint idx = 0; idx < gtklock->windows->len; idx++) {
+				struct Window *ctx = g_array_index(gtklock->windows, struct Window *, idx);
+				if(ctx != w) {
+					any_window = ctx;
+					break;
+				}
+			}
 
-			gtklock->focused_window = NULL;
-			if(any_window) window_swap_focus(any_window, w);
+			if(any_window) gtklock_focus_window(gtklock, any_window);
+			else gtklock->focused_window = NULL;
 		}
 		gtk_session_lock_unmap_lock_window(GTK_WINDOW(w->window));
 		gtk_widget_destroy(w->window);
