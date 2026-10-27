@@ -25,6 +25,9 @@ gtklock [options...]
 	in the following order: $XDG_CONFIG_HOME/gtklock/config.ini and
 	gtklock/config.ini under each directory in $XDG_CONFIG_DIRS.
 
+*-p, --preview*
+	Enable preview mode where any password can unlock
+
 # CONFIGURATION
 
 Configuration is stored in glib key file format. Options are specified as
