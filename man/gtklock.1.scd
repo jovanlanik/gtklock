@@ -76,6 +76,9 @@ All available options are:
 *-U, --unlock-command*
 	Command to execute after unlocking. Command is executed asynchronously.
 
+*-I, --idle-command*
+	Command to execute after idle timeout. Command is executed asynchronously.
+
 *-M, --monitor-priority* <name>
 	Set monitor focus priority. Option can be specified multiple times.
 
