@@ -1,5 +1,5 @@
 # gtklock
-# Copyright (c) 2023 Jianhua Lu, Jovan Lanik
+# Copyright (c) 2026 Jianhua Lu, Jovan Lanik
 
 gtklock_sources = files([
   'auth.c',

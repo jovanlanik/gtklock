@@ -1,5 +1,5 @@
 # gtklock
-# Copyright (c) 2023 Kenny Levinsen, Jovan Lanik
+# Copyright (c) 2026 Kenny Levinsen, Jovan Lanik
 
 if import('fs').is_absolute(get_option('localedir'))
   localedir = get_option('localedir')

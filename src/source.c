@@ -1,5 +1,5 @@
 // gtklock
-// Copyright (c) 2022 Kenny Levinsen, Jovan Lanik, Bhaskar Khoraja
+// Copyright (c) 2026 Kenny Levinsen, Jovan Lanik, Bhaskar Khoraja
 
 #define _POSIX_C_SOURCE 200809L
 

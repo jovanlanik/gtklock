@@ -1,5 +1,5 @@
 // gtklock
-// Copyright (c) 2022 Kenny Levinsen, Jovan Lanik, Bhaskar Khoraja
+// Copyright (c) 2026 Kenny Levinsen, Jovan Lanik, Bhaskar Khoraja
 
 // gtklock application
 
